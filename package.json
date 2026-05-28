@@ -1,0 +1,21 @@
+{
+  "name": "agentops",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AgentOps - Enterprise-grade AI Orchestration Platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{js,ts,tsx,json,md}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5",
+    "turbo": "^1.13.3"
+  }
+}

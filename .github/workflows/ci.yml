@@ -1,0 +1,124 @@
+name: AgentOps Continuous Integration Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # --- STAGE 1: QUALITY CONTROLS ---
+  code-hygiene:
+    name: Linting and Code Hygiene Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout monorepo code
+        uses: actions/checkout@v4
+
+      - name: Initialize Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Setup Python Runtime Env
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Install Python Poetry tools
+      - name: Install Poetry package manager
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      # Node.js Monorepo verification
+      - name: Install workspaces dependencies
+        run: npm ci
+
+      - name: Run Web styles/lint verification
+        run: npm run lint
+
+      # Python environments linting validation
+      - name: Lint api-gateway package structures
+        run: |
+          cd apps/api-gateway
+          poetry install
+          poetry run black --check .
+          poetry run mypy . --ignore-missing-imports
+
+      - name: Lint agent-runtime package structures
+        run: |
+          cd apps/agent-runtime
+          poetry install
+          poetry run black --check .
+          poetry run mypy . --ignore-missing-imports
+
+  # --- STAGE 2: EXECUTION TESTING ---
+  integration-tests:
+    name: Execution Tests & Probes
+    runs-on: ubuntu-latest
+    needs: code-hygiene
+    steps:
+      - name: Checkout monorepo code
+        uses: actions/checkout@v4
+
+      - name: Setup Python Runtime Env
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies and execute Python unit tests
+        run: |
+          python -m pip install --upgrade pip
+          pip install httpx
+          python -m unittest discover -s tests -p "*_test.py"
+
+  # --- STAGE 3: CONTAINERIZATION BUILD & DOCKER HUB DEPLOYS ---
+  docker-compilation:
+    name: Multi-stage Container Compilation
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    steps:
+      - name: Checkout monorepo code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub Registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Compile and push core front-end UI service
+      - name: Build and push Frontend Container
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infra/docker/ui.Dockerfile
+          push: true
+          tags: agentops/ui:latest
+
+      # Compile and push FastAPI Gateway API service
+      - name: Build and push API Gateway Container
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infra/docker/api-gateway.Dockerfile
+          push: true
+          tags: agentops/api-gateway:latest
+
+      # Compile and push asynchronous Python Engine service
+      - name: Build and push Agent Runtime Container
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infra/docker/agent-runtime.Dockerfile
+          push: true
+          tags: agentops/agent-runtime:latest

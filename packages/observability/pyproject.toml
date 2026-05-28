@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "agentops-observability"
+version = "0.1.0"
+description = "AgentOps OpenTelemetry Instrumentation SDK"
+authors = ["AgentOps Architect"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+opentelemetry-api = "^1.23.0"
+opentelemetry-sdk = "^1.23.0"
+opentelemetry-exporter-otlp = "^1.23.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

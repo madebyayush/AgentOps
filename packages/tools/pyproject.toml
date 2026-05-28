@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "agentops-tools"
+version = "0.1.0"
+description = "AgentOps Extensible Tool Registry & MCP Adapters"
+authors = ["AgentOps Architect"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pydantic = "^2.6.4"
+httpx = "^0.27.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

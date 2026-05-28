@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "agentops-security"
+version = "0.1.0"
+description = "AgentOps Enterprise Authentication, RBAC & Redaction Guardrails"
+authors = ["AgentOps Architect"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pydantic = "^2.6.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

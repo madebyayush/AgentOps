@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "agentops-memory"
+version = "0.1.0"
+description = "AgentOps Cognitive Memory Subsystem Adapters"
+authors = ["AgentOps Architect"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+redis = "^5.0.3"
+qdrant-client = "^1.8.2"
+pydantic = "^2.6.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
