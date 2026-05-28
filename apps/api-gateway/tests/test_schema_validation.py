@@ -2,6 +2,7 @@
 Pydantic Schema Validation Tests
 Tests edge cases and rejection rules for all request schemas.
 """
+
 from __future__ import annotations
 
 import uuid

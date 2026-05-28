@@ -3,6 +3,7 @@ JWT Authentication Middleware Tests
 Tests: valid JWT, expired JWT, malformed token, wrong algorithm, valid API key,
        invalid API key, no credentials, correct claims propagation.
 """
+
 from __future__ import annotations
 
 import time
@@ -32,6 +33,7 @@ class TestJWTValidation:
         ) as ac:
             # Remove the dependency override to test real auth
             from app.middleware.auth import get_current_user
+
             if get_current_user in app.dependency_overrides:
                 del app.dependency_overrides[get_current_user]
             resp = await ac.get("/api/v1/agents")
@@ -40,6 +42,7 @@ class TestJWTValidation:
     async def test_malformed_jwt_rejected(self, app: FastAPI):
         """A completely invalid token must return 401."""
         from app.middleware.auth import get_current_user
+
         if get_current_user in app.dependency_overrides:
             del app.dependency_overrides[get_current_user]
         async with AsyncClient(
@@ -53,6 +56,7 @@ class TestJWTValidation:
     async def test_wrong_algorithm_jwt_rejected(self, app: FastAPI):
         """A JWT signed with RS256 (not HS256) must be rejected."""
         from app.middleware.auth import get_current_user
+
         if get_current_user in app.dependency_overrides:
             del app.dependency_overrides[get_current_user]
         # We can't sign RS256 without a key pair — just send a modified header
@@ -68,6 +72,7 @@ class TestJWTValidation:
     async def test_no_credentials_returns_401(self, anon_client: AsyncClient, app: FastAPI):
         """No auth header at all — must return 401."""
         from app.middleware.auth import get_current_user
+
         if get_current_user in app.dependency_overrides:
             del app.dependency_overrides[get_current_user]
         async with AsyncClient(
@@ -90,6 +95,7 @@ class TestJWTClaims:
             # Let the real auth run, then capture the result
             token = make_jwt(sub="custom-user-123", roles=["auditor"])
             from app.middleware.auth import decode_jwt
+
             claims = decode_jwt(token)
             captured_user.update(claims)
             return {"sub": claims["sub"], "roles": claims.get("roles", []), "auth_method": "jwt"}
@@ -110,6 +116,7 @@ class TestAPIKeyAuth:
     async def test_valid_api_key_accepted(self, app: FastAPI, test_settings):
         """The bootstrap API key derived from JWT_SECRET_KEY[:32] must work."""
         from app.middleware.auth import get_current_user, _hash_api_key
+
         if get_current_user in app.dependency_overrides:
             del app.dependency_overrides[get_current_user]
 
@@ -125,6 +132,7 @@ class TestAPIKeyAuth:
     async def test_invalid_api_key_rejected(self, app: FastAPI):
         """A wrong API key must return 401."""
         from app.middleware.auth import get_current_user
+
         if get_current_user in app.dependency_overrides:
             del app.dependency_overrides[get_current_user]
 

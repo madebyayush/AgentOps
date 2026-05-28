@@ -2,6 +2,7 @@
 CRUD — HITL endpoints
 Tests: list pending, get detail, approve, reject, double-decision guard, missing reason.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -18,7 +19,9 @@ class TestHitlList:
         assert resp.status_code == 200
         assert isinstance(resp.json(), list)
 
-    async def test_list_pending_shows_pending_only(self, client: AsyncClient, db_session: AsyncSession):
+    async def test_list_pending_shows_pending_only(
+        self, client: AsyncClient, db_session: AsyncSession
+    ):
         agent = await seed_agent(db_session, name="hitl-list-agent")
         run = await seed_run(db_session, agent_id=uuid.UUID(agent["id"]))
         await seed_hitl(db_session, run_id=uuid.UUID(run["id"]))

@@ -8,6 +8,7 @@ Endpoints:
   POST   /agents/{id}/run      — enqueue a new run for the agent
   GET    /agents/{id}/status   — get the latest run status (Redis-cached)
 """
+
 from __future__ import annotations
 
 import logging
@@ -39,6 +40,7 @@ router = APIRouter(prefix="/agents", tags=["Agents"])
 
 # ── POST /agents ──────────────────────────────────────────────────────────────
 
+
 @router.post(
     "",
     response_model=AgentResponse,
@@ -69,6 +71,7 @@ async def create_agent(
 
 # ── GET /agents ───────────────────────────────────────────────────────────────
 
+
 @router.get(
     "",
     response_model=PaginatedResponse[AgentResponse],
@@ -98,6 +101,7 @@ async def list_agents(
 
 # ── GET /agents/{id} ──────────────────────────────────────────────────────────
 
+
 @router.get(
     "/{agent_id}",
     response_model=AgentResponse,
@@ -115,6 +119,7 @@ async def get_agent(
 
 
 # ── POST /agents/{id}/run ─────────────────────────────────────────────────────
+
 
 @router.post(
     "/{agent_id}/run",
@@ -171,6 +176,7 @@ async def run_agent(
 
 # ── GET /agents/{id}/status ───────────────────────────────────────────────────
 
+
 @router.get(
     "/{agent_id}/status",
     response_model=RunStatusResponse,
@@ -192,10 +198,7 @@ async def get_agent_status(
     else:
         # Fetch the latest run for this agent
         result = await db.execute(
-            select(Run)
-            .where(Run.agent_id == agent_id)
-            .order_by(Run.created_at.desc())
-            .limit(1)
+            select(Run).where(Run.agent_id == agent_id).order_by(Run.created_at.desc()).limit(1)
         )
         run = result.scalar_one_or_none()
 

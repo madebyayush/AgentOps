@@ -3,6 +3,7 @@ Async Pattern Tests
 Tests: session rollback on error, concurrent requests handled correctly,
        DB session cleanup, Redis pool initialisation guard, model repr methods.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -74,6 +75,7 @@ class TestRedisPoolGuard:
     async def test_get_redis_raises_if_pool_not_init(self):
         """get_redis() must raise RuntimeError if pool is None."""
         import app.redis_client as rc
+
         original_pool = rc._redis_pool
         rc._redis_pool = None
         try:

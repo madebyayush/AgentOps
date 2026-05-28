@@ -8,6 +8,7 @@ Endpoints:
   POST   /workflows/{id}/execute — execute a workflow
   DELETE /workflows/{id}         — delete a workflow
 """
+
 from __future__ import annotations
 
 import logging
@@ -67,10 +68,17 @@ async def list_workflows(
     offset = (page - 1) * page_size
     total = (await db.execute(select(func.count()).select_from(Workflow))).scalar_one()
     rows = (
-        await db.execute(
-            select(Workflow).order_by(Workflow.created_at.desc()).offset(offset).limit(page_size)
+        (
+            await db.execute(
+                select(Workflow)
+                .order_by(Workflow.created_at.desc())
+                .offset(offset)
+                .limit(page_size)
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
     return PaginatedResponse(
         items=[WorkflowResponse.model_validate(w) for w in rows],
         total=total,
@@ -109,7 +117,10 @@ async def execute_workflow(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Workflow not found.")
     log.info(
         "Workflow execute: id=%s name=%s dry_run=%s by=%s",
-        workflow_id, wf.name, body.dry_run, user["sub"],
+        workflow_id,
+        wf.name,
+        body.dry_run,
+        user["sub"],
     )
     # Phase 1: return execution plan stub. Phase 2 dispatches to agent-runtime.
     return {

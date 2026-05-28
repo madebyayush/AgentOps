@@ -10,6 +10,7 @@ per-role endpoint restrictions (that's Phase 3 RBAC). These tests verify:
   3. Public endpoints (health, metrics) are accessible without auth.
   4. X-Request-ID is stamped on every response.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -23,11 +24,13 @@ class TestRoleExtraction:
     async def test_operator_role_from_jwt(self, app: FastAPI):
         """JWT with roles=['operator'] must be accepted."""
         from app.middleware.auth import get_current_user
+
         captured = {}
 
         async def capturing_user():
             token = make_jwt(roles=["operator"])
             from app.middleware.auth import decode_jwt
+
             claims = decode_jwt(token)
             captured["roles"] = claims.get("roles", [])
             return {"sub": "op-user", "roles": claims.get("roles", []), "auth_method": "jwt"}
@@ -41,11 +44,13 @@ class TestRoleExtraction:
     async def test_admin_role_from_jwt(self, app: FastAPI):
         """JWT with roles=['admin'] must be accepted."""
         from app.middleware.auth import get_current_user
+
         captured = {}
 
         async def capturing_admin():
             token = make_admin_jwt()
             from app.middleware.auth import decode_jwt
+
             claims = decode_jwt(token)
             captured["roles"] = claims.get("roles", [])
             return {"sub": "admin-user", "roles": claims.get("roles", []), "auth_method": "jwt"}
@@ -59,11 +64,13 @@ class TestRoleExtraction:
     async def test_auditor_role_from_jwt(self, app: FastAPI):
         """JWT with roles=['auditor'] must be accepted."""
         from app.middleware.auth import get_current_user
+
         captured = {}
 
         async def capturing_auditor():
             token = make_auditor_jwt()
             from app.middleware.auth import decode_jwt
+
             claims = decode_jwt(token)
             captured["roles"] = claims.get("roles", [])
             return {"sub": "auditor-user", "roles": claims.get("roles", []), "auth_method": "jwt"}

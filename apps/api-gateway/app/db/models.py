@@ -8,6 +8,7 @@ Column conventions:
   - Enums        : Python Enum → SQLAlchemy Enum (stored as VARCHAR)
   - FKs          : ondelete="CASCADE" where child rows should not outlive parent
 """
+
 from __future__ import annotations
 
 import enum
@@ -31,54 +32,58 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Enums
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class RunStatus(str, enum.Enum):
-    queued    = "queued"
-    running   = "running"
+    queued = "queued"
+    running = "running"
     completed = "completed"
-    failed    = "failed"
+    failed = "failed"
     cancelled = "cancelled"
 
 
 class HitlStatus(str, enum.Enum):
-    pending  = "pending"
+    pending = "pending"
     approved = "approved"
     rejected = "rejected"
-    expired  = "expired"
+    expired = "expired"
 
 
 class IncidentSeverity(str, enum.Enum):
-    low      = "low"
-    medium   = "medium"
-    high     = "high"
+    low = "low"
+    medium = "medium"
+    high = "high"
     critical = "critical"
 
 
 class IncidentStatus(str, enum.Enum):
-    open          = "open"
+    open = "open"
     investigating = "investigating"
-    resolved      = "resolved"
-    closed        = "closed"
+    resolved = "resolved"
+    closed = "closed"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. Agent
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class Agent(Base):
     """
     Registered AI agent definition.
     `config_json` stores model selection, system prompt, tools list, etc.
     """
+
     __tablename__ = "agents"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True,
-        default=uuid.uuid4, server_default=func.gen_random_uuid(),
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False, index=True, unique=True)
     type: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -105,16 +110,20 @@ class Agent(Base):
 # 2. Run
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class Run(Base):
     """
     A single execution of an Agent.
     Status transitions: queued → running → completed | failed | cancelled
     """
+
     __tablename__ = "runs"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True,
-        default=uuid.uuid4, server_default=func.gen_random_uuid(),
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
     )
     agent_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -147,16 +156,20 @@ class Run(Base):
 # 3. MemoryEntry
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class MemoryEntry(Base):
     """
     A single piece of stored memory belonging to a namespace.
     `embedding_id` references the corresponding vector ID in Qdrant/Pinecone.
     """
+
     __tablename__ = "memory_entries"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True,
-        default=uuid.uuid4, server_default=func.gen_random_uuid(),
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
     )
     namespace: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     content: Mapped[str] = mapped_column(Text, nullable=False)
@@ -174,16 +187,20 @@ class MemoryEntry(Base):
 # 4. Tool
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class Tool(Base):
     """
     Registered tool available to agents.
     `tool_schema` is the JSON Schema describing the tool's input parameters.
     """
+
     __tablename__ = "tools"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True,
-        default=uuid.uuid4, server_default=func.gen_random_uuid(),
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
@@ -204,17 +221,21 @@ class Tool(Base):
 # 5. Workflow
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class Workflow(Base):
     """
     A directed graph of agent steps / tasks.
     `graph_json` stores nodes, edges, and configuration for the workflow engine.
     `version` is bumped on every update to support rollback.
     """
+
     __tablename__ = "workflows"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True,
-        default=uuid.uuid4, server_default=func.gen_random_uuid(),
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -235,16 +256,20 @@ class Workflow(Base):
 # 6. HitlRequest  (Human-in-the-Loop)
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class HitlRequest(Base):
     """
     A pending human approval gate within an agent run.
     The run is paused until a human approves or rejects the proposed action.
     """
+
     __tablename__ = "hitl_requests"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True,
-        default=uuid.uuid4, server_default=func.gen_random_uuid(),
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
     )
     run_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -274,16 +299,20 @@ class HitlRequest(Base):
 # 7. AuditLog
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class AuditLog(Base):
     """
     Immutable audit trail of every significant action in the platform.
     Rows are NEVER updated or deleted — only inserted.
     """
+
     __tablename__ = "audit_logs"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True,
-        default=uuid.uuid4, server_default=func.gen_random_uuid(),
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
     )
     actor: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     action: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
@@ -304,16 +333,20 @@ class AuditLog(Base):
 # 8. Incident
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class Incident(Base):
     """
     Platform incident record — detected failures, SLA breaches, or anomalies.
     Lifecycle: open → investigating → resolved → closed
     """
+
     __tablename__ = "incidents"
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True,
-        default=uuid.uuid4, server_default=func.gen_random_uuid(),
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=func.gen_random_uuid(),
     )
     severity: Mapped[IncidentSeverity] = mapped_column(
         SAEnum(IncidentSeverity, name="incident_severity"), nullable=False, index=True

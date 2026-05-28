@@ -2,6 +2,7 @@
 CRUD — Tools endpoints
 Tests: list enabled tools, disabled tools excluded, get by ID, invoke existing/nonexistent.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -35,7 +36,9 @@ class TestToolsList:
         assert resp.json()["name"] == "fetch-me-tool"
         assert "tool_schema" in resp.json()
 
-    async def test_get_disabled_tool_returns_404(self, client: AsyncClient, db_session: AsyncSession):
+    async def test_get_disabled_tool_returns_404(
+        self, client: AsyncClient, db_session: AsyncSession
+    ):
         tool = await seed_tool(db_session, name="hidden-tool", enabled=False)
         resp = await client.get(f"/api/v1/tools/{tool['id']}")
         assert resp.status_code == 404

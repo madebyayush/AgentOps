@@ -2,6 +2,7 @@
 CRUD — Incident endpoints
 Tests: create, list with severity/status filters, get, PATCH update, resolved_at auto-set.
 """
+
 from __future__ import annotations
 
 import uuid

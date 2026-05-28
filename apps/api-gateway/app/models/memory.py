@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for Memory resources."""
+
 from __future__ import annotations
 
 import uuid

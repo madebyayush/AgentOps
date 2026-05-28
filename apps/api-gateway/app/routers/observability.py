@@ -6,6 +6,7 @@ Endpoints:
   GET /ready    — readiness probe
   GET /metrics  — Prometheus-compatible text metrics (basic counters)
 """
+
 from __future__ import annotations
 
 import logging
@@ -43,6 +44,7 @@ async def health(request: Request) -> dict:
     try:
         from app.db.session import get_engine
         from sqlalchemy import text
+
         async with get_engine().connect() as conn:
             await conn.execute(text("SELECT 1"))
         checks["postgres"] = "healthy"
@@ -54,6 +56,7 @@ async def health(request: Request) -> dict:
     # ── Redis ping ────────────────────────────────────────────────────────────
     try:
         from app.redis_client import _redis_pool
+
         if _redis_pool:
             await _redis_pool.ping()
             checks["redis"] = "healthy"

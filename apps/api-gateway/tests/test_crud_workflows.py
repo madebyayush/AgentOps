@@ -2,6 +2,7 @@
 CRUD — Workflow endpoints
 Tests: create, duplicate, list pagination, get, execute (real+dry-run), delete.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -29,12 +30,18 @@ class TestWorkflowCreate:
     async def test_create_workflow_with_description(self, client: AsyncClient):
         resp = await client.post(
             "/api/v1/workflows",
-            json={"name": "described-pipeline", "description": "My workflow", "graph_json": SAMPLE_GRAPH},
+            json={
+                "name": "described-pipeline",
+                "description": "My workflow",
+                "graph_json": SAMPLE_GRAPH,
+            },
         )
         assert resp.status_code == 201
         assert resp.json()["description"] == "My workflow"
 
-    async def test_create_workflow_duplicate_name(self, client: AsyncClient, db_session: AsyncSession):
+    async def test_create_workflow_duplicate_name(
+        self, client: AsyncClient, db_session: AsyncSession
+    ):
         await seed_workflow(db_session, name="dup-flow")
         resp = await client.post("/api/v1/workflows", json={"name": "dup-flow", "graph_json": {}})
         assert resp.status_code == 409

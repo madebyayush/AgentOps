@@ -3,6 +3,7 @@ Root-level conftest: sets required environment variables BEFORE any app
 module is imported. Also patches postgresql-specific SQLAlchemy types to
 generic equivalents so production ORM models work with SQLite in tests.
 """
+
 import os
 import uuid as _uuid_module
 
@@ -25,6 +26,7 @@ class _TestUUID(sa_types.TypeDecorator):
     Stores UUIDs as VARCHAR(36) strings in SQLite.
     Handles python uuid.UUID objects transparently.
     """
+
     impl = sa_types.String(36)
     cache_ok = True
 
@@ -52,9 +54,10 @@ class _TestUUID(sa_types.TypeDecorator):
 
 class _TestJSONB(sa_types.JSON):
     """Drop-in for postgresql.JSONB using standard JSON in SQLite."""
+
     pass
 
 
 # Apply patches before models are imported
-pg_dialect.UUID = _TestUUID        # type: ignore[attr-defined]
-pg_dialect.JSONB = _TestJSONB      # type: ignore[attr-defined]
+pg_dialect.UUID = _TestUUID  # type: ignore[attr-defined]
+pg_dialect.JSONB = _TestJSONB  # type: ignore[attr-defined]

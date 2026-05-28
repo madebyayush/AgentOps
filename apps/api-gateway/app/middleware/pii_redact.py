@@ -18,16 +18,16 @@ Patterns covered:
   - API_KEY     : sk-*, Bearer tokens, common API key prefixes
   - JWT         : base64url.base64url.base64url token format
 """
+
 from __future__ import annotations
 
 import logging
 import re
 
-
 _PATTERNS: list[tuple[str, re.Pattern[str]]] = [
-    ("EMAIL",       re.compile(r"[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}", re.IGNORECASE)),
-    ("PHONE",       re.compile(r"\b(\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]\d{3}[-.\s]\d{4}\b")),
-    ("SSN",         re.compile(r"\b\d{3}-\d{2}-\d{4}\b")),
+    ("EMAIL", re.compile(r"[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}", re.IGNORECASE)),
+    ("PHONE", re.compile(r"\b(\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]\d{3}[-.\s]\d{4}\b")),
+    ("SSN", re.compile(r"\b\d{3}-\d{2}-\d{4}\b")),
     ("CREDIT_CARD", re.compile(r"\b(?:4\d{12}(?:\d{3})?|5[1-5]\d{14}|3[47]\d{13}|6011\d{12})\b")),
     (
         "API_KEY",

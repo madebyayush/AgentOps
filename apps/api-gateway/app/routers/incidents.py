@@ -7,6 +7,7 @@ Endpoints:
   GET   /incidents/{id}   — get incident detail
   PATCH /incidents/{id}   — update incident (status, root_cause, resolution)
 """
+
 from __future__ import annotations
 
 import logging
@@ -49,7 +50,9 @@ async def create_incident(
     await db.refresh(incident)
     log.warning(
         "Incident created: id=%s severity=%s by=%s",
-        incident.id, incident.severity.value, user["sub"],
+        incident.id,
+        incident.severity.value,
+        user["sub"],
     )
     return IncidentResponse.model_validate(incident)
 

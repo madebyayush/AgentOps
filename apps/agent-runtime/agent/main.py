@@ -4,7 +4,10 @@ import logging
 from dotenv import load_dotenv
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] agentops.runtime: %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] agentops.runtime: %(message)s",
+)
 logger = logging.getLogger("agentops.runtime")
 
 # Load environment configuration
@@ -16,6 +19,7 @@ if not os.getenv("ANTHROPIC_API_KEY") and not os.getenv("OPENAI_API_KEY"):
     logger.critical(critical_error_msg)
     raise ValueError(critical_error_msg)
 
+
 class AgentRuntimeEngine:
     def __init__(self):
         self.is_running = False
@@ -26,8 +30,10 @@ class AgentRuntimeEngine:
         Launches the primary execution loop subscribing to Kafka task queues.
         """
         self.is_running = True
-        logger.info("AgentOps cognitive engine successfully launched and listening for job dispatches...")
-        
+        logger.info(
+            "AgentOps cognitive engine successfully launched and listening for job dispatches..."
+        )
+
         try:
             while self.is_running:
                 # In a live setup, this blocks on Kafka `consumer.getmany()` or similar async poll.
@@ -50,16 +56,18 @@ class AgentRuntimeEngine:
         """
         logger.info(f"Received Execution Ticket: {task_id}")
         logger.info(f"Injecting episodic context from memory index...")
-        
+
         # Emulating stages of multi-agent cognitive executions
         await asyncio.sleep(1.0)
         logger.info(f"Routing to agent sub-network...")
-        
+
         await asyncio.sleep(1.0)
         logger.info(f"Security checking output payload clearance...")
-        
+
         await asyncio.sleep(0.5)
-        logger.info(f"Task {task_id} successfully resolved. Result payload compiled to MinIO storage.")
+        logger.info(
+            f"Task {task_id} successfully resolved. Result payload compiled to MinIO storage."
+        )
 
     async def shutdown(self):
         """
@@ -70,14 +78,16 @@ class AgentRuntimeEngine:
         await asyncio.sleep(1.0)
         logger.info("Runtime resources cleanly released. Engine closed.")
 
+
 async def main():
     engine = AgentRuntimeEngine()
-    
+
     # Configure Unix signals hook where applicable, otherwise run directly
     try:
         await engine.start()
     except (KeyboardInterrupt, SystemExit):
         await engine.shutdown()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

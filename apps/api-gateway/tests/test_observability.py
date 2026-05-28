@@ -3,6 +3,7 @@ Observability Endpoint Tests
 Tests: /health response shape, /ready shape, /metrics Prometheus format,
        uptime_seconds is positive number.
 """
+
 from __future__ import annotations
 
 import pytest

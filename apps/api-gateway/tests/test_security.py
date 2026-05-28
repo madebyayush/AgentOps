@@ -3,6 +3,7 @@ Security Tests
 Tests: rate limit (429), SQL special chars in inputs, header injection,
        large payload rejection, missing auth, PII redaction filter.
 """
+
 from __future__ import annotations
 
 import re
@@ -50,10 +51,13 @@ class TestPIIRedaction:
         """PIIRedactLogFilter must scrub the log record message."""
         filt = PIIRedactLogFilter()
         record = logging.LogRecord(
-            name="test", level=logging.INFO,
-            pathname="", lineno=0,
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
             msg="User email: user@example.com and token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1In0.sig",
-            args=(), exc_info=None,
+            args=(),
+            exc_info=None,
         )
         filt.filter(record)
         assert "user@example.com" not in record.msg
@@ -83,6 +87,7 @@ class TestInputSanitization:
     async def test_very_long_prompt_clamped(self, client: AsyncClient):
         """Prompts exceeding max_length must be rejected by Pydantic."""
         import uuid
+
         # We need a real agent for run endpoint but this tests schema validation
         resp = await client.post(
             f"/api/v1/agents/{uuid.uuid4()}/run",

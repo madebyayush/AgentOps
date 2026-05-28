@@ -2,6 +2,7 @@
 CRUD — Agent endpoints
 Tests: create, list, get, duplicate name, run enqueue, status, 404 paths.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -25,7 +26,11 @@ class TestAgentCreate:
     async def test_create_agent_with_config(self, client: AsyncClient):
         resp = await client.post(
             "/api/v1/agents",
-            json={"name": "researcher-bot", "type": "researcher", "config_json": {"model": "claude-3-5"}},
+            json={
+                "name": "researcher-bot",
+                "type": "researcher",
+                "config_json": {"model": "claude-3-5"},
+            },
         )
         assert resp.status_code == 201
         assert resp.json()["config_json"]["model"] == "claude-3-5"

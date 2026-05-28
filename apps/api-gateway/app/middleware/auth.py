@@ -13,6 +13,7 @@ full DB lookup; Phase 1 uses a simple env-configured key for bootstrapping).
 `get_current_user()` is a FastAPI dependency that routers import.
 Unauthenticated routes (health, metrics) skip this dependency.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -34,6 +35,7 @@ api_key_scheme = APIKeyHeader(name=settings.API_KEY_HEADER, auto_error=False)
 
 
 # ── Token helpers ─────────────────────────────────────────────────────────────
+
 
 def decode_jwt(token: str) -> dict[str, Any]:
     """
@@ -62,6 +64,7 @@ def _hash_api_key(raw_key: str) -> str:
 
 
 # ── Primary auth dependency ───────────────────────────────────────────────────
+
 
 async def get_current_user(
     request: Request,
@@ -98,6 +101,7 @@ async def get_current_user(
         # Phase 1: compare against a single env-configured hashed key.
         # Phase 3 will replace this with a full DB lookup.
         from app.config import get_settings as _gs
+
         _settings = _gs()
 
         # We derive the "bootstrap" key from the JWT_SECRET_KEY for simplicity.
@@ -130,6 +134,7 @@ async def get_current_user(
 
 
 # ── Optional auth (for public endpoints that benefit from user context) ────────
+
 
 async def get_optional_user(
     request: Request,

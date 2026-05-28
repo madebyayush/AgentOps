@@ -16,6 +16,7 @@ Key Schema Reference:
   agentops:rate_limit:{user_id}:{win}  → sorted set of request timestamps
   agentops:session:{token_hash}        → session metadata (JSON)
 """
+
 from __future__ import annotations
 
 import json
@@ -67,6 +68,7 @@ async def close_redis_pool() -> None:
 
 # ── FastAPI dependency ────────────────────────────────────────────────────────
 
+
 async def get_redis() -> AsyncGenerator[Redis, None]:
     """
     Yield the shared Redis client.
@@ -83,6 +85,7 @@ async def get_redis() -> AsyncGenerator[Redis, None]:
 
 
 # ── Key-schema helpers ────────────────────────────────────────────────────────
+
 
 def _build_key(resource: str, *parts: str) -> str:
     """
@@ -125,9 +128,7 @@ class AgentOpsRedisClient:
         except RedisError as exc:
             log.error("cache_set failed for key=%s: %s", key, exc)
 
-    async def cache_get(
-        self, resource: str, resource_id: str, field: str
-    ) -> Any | None:
+    async def cache_get(self, resource: str, resource_id: str, field: str) -> Any | None:
         """
         Retrieve and JSON-deserialise a cached value.
         Returns None on cache miss or error.
@@ -204,9 +205,7 @@ class AgentOpsRedisClient:
             log.error("publish_event failed on channel=%s: %s", channel, exc)
             return 0
 
-    async def publish_run_event(
-        self, run_id: str, event_type: str, data: dict[str, Any]
-    ) -> None:
+    async def publish_run_event(self, run_id: str, event_type: str, data: dict[str, Any]) -> None:
         """Convenience wrapper for publishing run lifecycle events."""
         channel = _build_key("run", run_id, "events")
         await self.publish_event(

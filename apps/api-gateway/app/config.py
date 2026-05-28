@@ -3,6 +3,7 @@ AgentOps API Gateway — Application Settings
 All configuration is read from environment variables (or .env file).
 Missing mandatory variables cause a ValueError at startup — no silent failures.
 """
+
 from __future__ import annotations
 
 import secrets
@@ -43,7 +44,7 @@ class Settings(BaseSettings):
     REDIS_DEFAULT_TTL: int = 3600  # seconds
 
     # ── Auth ──────────────────────────────────────────────────────────────────
-    JWT_SECRET_KEY: str = secrets.token_hex(32)   # must be overridden in prod
+    JWT_SECRET_KEY: str = secrets.token_hex(32)  # must be overridden in prod
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     API_KEY_HEADER: str = "X-API-Key"

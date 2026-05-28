@@ -5,6 +5,7 @@ This module provides ready-to-use, robust, in-memory mocks for standard
 external and internal dependencies (Redis, Database, OpenAI LLM, Kafka)
 specifically structured for modern FastAPI / asyncio testing.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -12,16 +13,17 @@ import uuid
 import time
 from typing import Any, AsyncGenerator, Callable
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. Mock SQLAlchemy AsyncSession
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class MockAsyncSession:
     """
     An in-memory mock for SQLAlchemy's AsyncSession.
     Tracks inserts, updates, and supports committing/rolling back.
     """
+
     def __init__(self):
         self.inserted: list[Any] = []
         self.deleted: list[Any] = []
@@ -58,6 +60,7 @@ class MockAsyncSession:
 
 class MockResult:
     """Helper for SQLAlchemy execute results."""
+
     def __init__(self, rows: list[Any]):
         self._rows = rows
 
@@ -73,6 +76,7 @@ class MockResult:
 
 class MockScalars:
     """Helper for SQLAlchemy scalar selection."""
+
     def __init__(self, items: list[Any]):
         self._items = items
 
@@ -87,11 +91,13 @@ class MockScalars:
 # 2. Mock Redis Client
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class MockRedisClient:
     """
     An in-memory async Redis cache and pub/sub mock.
     Maintains a dictionary for state checking and mock rate limiting.
     """
+
     def __init__(self):
         self.store: dict[str, str] = {}
         self.events: list[tuple[str, str]] = []
@@ -128,6 +134,7 @@ class MockRedisClient:
         if hash_key not in self.store:
             self.store[hash_key] = "{}"
         import json
+
         data = json.loads(self.store[hash_key])
         data[key] = str(value)
         self.store[hash_key] = json.dumps(data)
@@ -138,6 +145,7 @@ class MockRedisClient:
         if hash_key not in self.store:
             return None
         import json
+
         data = json.loads(self.store[hash_key])
         return data.get(key)
 
@@ -145,6 +153,7 @@ class MockRedisClient:
 # ─────────────────────────────────────────────────────────────────────────────
 # 3. Mock OpenAI LLM Client Compliant with AsyncOpenAI API
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 class MockLLMChoiceMessage:
     def __init__(self, content: str, role: str = "assistant"):
@@ -176,28 +185,24 @@ class MockChatCompletionResponse:
 
 class MockChatCompletions:
     """Mock for client.chat.completions"""
+
     def __init__(self, default_response: str = "Cognitive execution completed successfully."):
         self.default_response = default_response
         self.calls: list[dict[str, Any]] = []
 
     async def create(
-        self,
-        model: str,
-        messages: list[dict[str, str]],
-        temperature: float = 0.7,
-        **kwargs: Any
+        self, model: str, messages: list[dict[str, str]], temperature: float = 0.7, **kwargs: Any
     ) -> MockChatCompletionResponse:
-        self.calls.append({
-            "model": model,
-            "messages": messages,
-            "temperature": temperature,
-            **kwargs
-        })
+        self.calls.append(
+            {"model": model, "messages": messages, "temperature": temperature, **kwargs}
+        )
         # Try to return customized content depending on system or user prompt if desired
         response_content = self.default_response
         for msg in messages:
             if "hello" in msg.get("content", "").lower():
-                response_content = "Hello! I am the AgentOps AI orchestration subsystem. How can I help you today?"
+                response_content = (
+                    "Hello! I am the AgentOps AI orchestration subsystem. How can I help you today?"
+                )
                 break
         return MockChatCompletionResponse(response_content, model=model)
 
@@ -207,21 +212,24 @@ class MockLLMClient:
     Mock OpenAI/Anthropic client mirroring the modern AsyncOpenAI instance structure.
     Used for unit testing LLM cognitive calls without API keys.
     """
+
     def __init__(self, default_response: str = "Cognitive execution completed successfully."):
-        self.chat = type("Chat", (object,), {
-            "completions": MockChatCompletions(default_response)
-        })()
+        self.chat = type(
+            "Chat", (object,), {"completions": MockChatCompletions(default_response)}
+        )()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 4. Mock Kafka Task Broker
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 class MockKafkaBroker:
     """
     Simulates Kafka message publish/subscribe queueing system.
     Saves and indexes jobs for assertions.
     """
+
     def __init__(self):
         self.topics: dict[str, list[dict[str, Any]]] = {}
 
@@ -233,7 +241,7 @@ class MockKafkaBroker:
             "value": value,
             "timestamp": time.time(),
             "partition": 0,
-            "offset": len(self.topics[topic])
+            "offset": len(self.topics[topic]),
         }
         self.topics[topic].append(payload)
         return payload

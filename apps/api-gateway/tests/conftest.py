@@ -12,6 +12,7 @@ Strategy:
   - Client    : httpx.AsyncClient with ASGITransport against real FastAPI app
   - Overrides : get_db, get_redis, get_current_user all overridden per test
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -69,6 +70,7 @@ async def db_engine():
 
     # Inject into the production session module so get_db() uses SQLite
     import app.db.session as sess_mod
+
     sess_mod._engine = engine
     sess_mod._AsyncSessionLocal = async_sessionmaker(
         bind=engine,
@@ -140,6 +142,7 @@ def make_auditor_jwt() -> str:
 @pytest.fixture(scope="session")
 def test_settings():
     from app.config import get_settings
+
     return get_settings()
 
 
@@ -205,8 +208,11 @@ async def admin_client(app: FastAPI) -> AsyncGenerator[AsyncClient, None]:
 
 
 # ── DB seed helpers ────────────────────────────────────────────────────────────
-async def seed_agent(session: AsyncSession, name: str = "test-agent", type_: str = "researcher") -> dict:
+async def seed_agent(
+    session: AsyncSession, name: str = "test-agent", type_: str = "researcher"
+) -> dict:
     from app.db.models import Agent
+
     agent = Agent(name=name, type=type_, config_json={"model": "gpt-4o"})
     session.add(agent)
     await session.flush()
@@ -215,6 +221,7 @@ async def seed_agent(session: AsyncSession, name: str = "test-agent", type_: str
 
 async def seed_run(session: AsyncSession, agent_id: Any) -> dict:
     from app.db.models import Run, RunStatus
+
     run = Run(agent_id=agent_id, status=RunStatus.queued, input_json={"prompt": "test"})
     session.add(run)
     await session.flush()
@@ -223,7 +230,10 @@ async def seed_run(session: AsyncSession, agent_id: Any) -> dict:
 
 async def seed_tool(session: AsyncSession, name: str = "test-tool", enabled: bool = True) -> dict:
     from app.db.models import Tool
-    tool = Tool(name=name, description="A test tool", tool_schema={"type": "object"}, is_enabled=enabled)
+
+    tool = Tool(
+        name=name, description="A test tool", tool_schema={"type": "object"}, is_enabled=enabled
+    )
     session.add(tool)
     await session.flush()
     return {"id": str(tool.id), "name": tool.name, "is_enabled": tool.is_enabled}
@@ -231,6 +241,7 @@ async def seed_tool(session: AsyncSession, name: str = "test-tool", enabled: boo
 
 async def seed_workflow(session: AsyncSession, name: str = "test-workflow") -> dict:
     from app.db.models import Workflow
+
     wf = Workflow(name=name, graph_json={"nodes": [], "edges": []}, version=1)
     session.add(wf)
     await session.flush()
@@ -239,6 +250,7 @@ async def seed_workflow(session: AsyncSession, name: str = "test-workflow") -> d
 
 async def seed_hitl(session: AsyncSession, run_id: Any) -> dict:
     from app.db.models import HitlRequest, HitlStatus
+
     req = HitlRequest(
         run_id=run_id,
         action_description="Delete production database",
@@ -252,6 +264,7 @@ async def seed_hitl(session: AsyncSession, run_id: Any) -> dict:
 
 async def seed_incident(session: AsyncSession, severity: str = "high") -> dict:
     from app.db.models import Incident, IncidentSeverity, IncidentStatus
+
     inc = Incident(
         severity=IncidentSeverity(severity),
         description="Test incident",

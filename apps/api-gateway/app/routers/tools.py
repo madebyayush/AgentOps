@@ -6,6 +6,7 @@ Endpoints:
   GET  /tools/{id}     — get tool schema by ID
   POST /tools/invoke   — invoke a tool (dispatches to agent-runtime)
 """
+
 from __future__ import annotations
 
 import logging

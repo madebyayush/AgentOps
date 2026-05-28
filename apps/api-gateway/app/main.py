@@ -13,6 +13,7 @@ Run locally:
 Production (via gunicorn + uvicorn workers):
     gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 4 -b 0.0.0.0:8000
 """
+
 from __future__ import annotations
 
 import logging
@@ -54,13 +55,14 @@ log = logging.getLogger("agentops.main")
 
 # ── Lifespan ──────────────────────────────────────────────────────────────────
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Async context manager that runs on startup and shutdown.
     - Startup : initialise Redis pool, log banner
     - Shutdown: drain Redis pool
-    
+
     Database connections are managed per-request via `get_db()` dependency,
     so no explicit pool init is needed here beyond engine creation (which
     happens at module import in db/session.py).
@@ -84,6 +86,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 # ── App factory ───────────────────────────────────────────────────────────────
+
 
 def create_app() -> FastAPI:
     """
@@ -120,7 +123,9 @@ def create_app() -> FastAPI:
         request_id = getattr(request.state, "request_id", "unknown")
         log.exception(
             "Unhandled exception on %s %s (request_id=%s)",
-            request.method, request.url.path, request_id,
+            request.method,
+            request.url.path,
+            request_id,
         )
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -138,11 +143,11 @@ def create_app() -> FastAPI:
     application.include_router(observability.router)
 
     # All other routes under /api/v1
-    application.include_router(agents.router,    prefix=api_prefix)
-    application.include_router(memory.router,    prefix=api_prefix)
-    application.include_router(tools.router,     prefix=api_prefix)
+    application.include_router(agents.router, prefix=api_prefix)
+    application.include_router(memory.router, prefix=api_prefix)
+    application.include_router(tools.router, prefix=api_prefix)
     application.include_router(workflows.router, prefix=api_prefix)
-    application.include_router(hitl.router,      prefix=api_prefix)
+    application.include_router(hitl.router, prefix=api_prefix)
     application.include_router(incidents.router, prefix=api_prefix)
 
     return application

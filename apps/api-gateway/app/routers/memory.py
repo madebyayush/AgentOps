@@ -7,6 +7,7 @@ Endpoints:
   GET    /memory/{namespace}   — list entries in a namespace (paginated)
   DELETE /memory/{namespace}/{id} — delete a specific entry
 """
+
 from __future__ import annotations
 
 import logging
@@ -55,7 +56,9 @@ async def create_memory_entry(
     db.add(entry)
     await db.flush()
     await db.refresh(entry)
-    log.info("MemoryEntry created: id=%s namespace=%s by=%s", entry.id, entry.namespace, user["sub"])
+    log.info(
+        "MemoryEntry created: id=%s namespace=%s by=%s", entry.id, entry.namespace, user["sub"]
+    )
     return MemoryEntryResponse.model_validate(entry)
 
 

@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for Incident resources."""
+
 from __future__ import annotations
 
 import uuid
@@ -34,6 +35,7 @@ class IncidentResponse(BaseModel):
 
 class IncidentUpdateRequest(BaseModel):
     """PATCH body — all fields optional, at least one must be provided."""
+
     status: IncidentStatus | None = None
     root_cause: str | None = None
     resolution: str | None = None

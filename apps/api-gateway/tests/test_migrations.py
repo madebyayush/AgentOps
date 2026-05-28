@@ -3,6 +3,7 @@ Migration File Structure Tests
 Tests: migration file exists, has correct revision ID, downgrade() defined,
        upgrade() creates expected tables, revision chain is linear.
 """
+
 from __future__ import annotations
 
 import ast
@@ -60,35 +61,35 @@ class TestMigrationContent:
         assert "down_revision" in content
         # Extract the assignment value — must be None (not a non-empty string)
         import re
+
         match = re.search(r"down_revision\s*(?::\s*[^=]+)?\s*=\s*(\S+)", content)
         assert match is not None, "down_revision not found"
         assert match.group(1) == "None", f"Expected None, got {match.group(1)!r}"
 
     def test_upgrade_function_defined(self):
         tree = self._parse_migration()
-        func_names = [
-            node.name
-            for node in ast.walk(tree)
-            if isinstance(node, ast.FunctionDef)
-        ]
+        func_names = [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
         assert "upgrade" in func_names
 
     def test_downgrade_function_defined(self):
         tree = self._parse_migration()
-        func_names = [
-            node.name
-            for node in ast.walk(tree)
-            if isinstance(node, ast.FunctionDef)
-        ]
+        func_names = [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
         assert "downgrade" in func_names
 
     def test_all_eight_tables_mentioned(self):
         files = list(MIGRATIONS_DIR.glob("001*.py"))
         content = files[0].read_text(encoding="utf-8")
         expected_tables = [
-            "agents", "runs", "memory_entries", "tools",
-            "workflows", "hitl_requests", "audit_logs", "incidents",
+            "agents",
+            "runs",
+            "memory_entries",
+            "tools",
+            "workflows",
+            "hitl_requests",
+            "audit_logs",
+            "incidents",
         ]
         for table in expected_tables:
-            assert f'"{table}"' in content or f"'{table}'" in content, \
-                f"Table '{table}' not found in migration"
+            assert (
+                f'"{table}"' in content or f"'{table}'" in content
+            ), f"Table '{table}' not found in migration"

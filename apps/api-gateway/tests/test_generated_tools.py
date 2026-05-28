@@ -4,6 +4,7 @@ Generated Pytest Suite for Tools Router
 This suite covers standard routing integration, security blocks,
 invalid payloads, and operational CRUD patterns.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -18,11 +19,9 @@ from tests.boilerplate_mocks import MockAsyncSession, MockRedisClient, MockLLMCl
 @pytest.mark.asyncio
 class TestToolsRouter:
 
-    async def test_list_tools_success(
-        self, client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_list_tools_success(self, client: AsyncClient, db_session: AsyncSession):
         """
-        Success track for GET 
+        Success track for GET
         """
         url = "/api/v1/tools"
         resp = await client.get(url)
@@ -31,9 +30,7 @@ class TestToolsRouter:
         data = resp.json()
         assert data is not None
 
-    async def test_list_tools_unauthorized(
-        self, anon_client: AsyncClient
-    ):
+    async def test_list_tools_unauthorized(self, anon_client: AsyncClient):
         """
         Unauthenticated block ensuring API token compliance
         """
@@ -41,9 +38,7 @@ class TestToolsRouter:
         resp = await anon_client.get(url)
         assert resp.status_code == 401
 
-    async def test_get_tool_success(
-        self, client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_get_tool_success(self, client: AsyncClient, db_session: AsyncSession):
         """
         Success track for GET /{tool_id}
         """
@@ -55,9 +50,7 @@ class TestToolsRouter:
         data = resp.json()
         assert data is not None
 
-    async def test_get_tool_unauthorized(
-        self, anon_client: AsyncClient
-    ):
+    async def test_get_tool_unauthorized(self, anon_client: AsyncClient):
         """
         Unauthenticated block ensuring API token compliance
         """
@@ -65,9 +58,7 @@ class TestToolsRouter:
         resp = await anon_client.get(url)
         assert resp.status_code == 401
 
-    async def test_invoke_tool_success(
-        self, client: AsyncClient, db_session: AsyncSession
-    ):
+    async def test_invoke_tool_success(self, client: AsyncClient, db_session: AsyncSession):
         """
         Success track for POST /invoke
         """
@@ -79,9 +70,7 @@ class TestToolsRouter:
         data = resp.json()
         assert data is not None
 
-    async def test_invoke_tool_unauthorized(
-        self, anon_client: AsyncClient
-    ):
+    async def test_invoke_tool_unauthorized(self, anon_client: AsyncClient):
         """
         Unauthenticated block ensuring API token compliance
         """
@@ -89,9 +78,7 @@ class TestToolsRouter:
         resp = await anon_client.post(url, json={})
         assert resp.status_code == 401
 
-    async def test_invoke_tool_invalid_payload(
-        self, client: AsyncClient
-    ):
+    async def test_invoke_tool_invalid_payload(self, client: AsyncClient):
         """
         Malformed body triggers standard 422 Unprocessable entity response
         """

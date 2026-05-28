@@ -3,6 +3,7 @@ Redis Caching Tests
 Tests: cache set/get, TTL, miss on nonexistent key, pub/sub publish,
        sliding-window rate limiter (allow, exhaust, window reset).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -68,14 +69,18 @@ class TestPubSub:
 class TestRateLimiter:
     async def test_rate_limit_allows_requests(self, fake_redis):
         client = AgentOpsRedisClient(fake_redis)
-        allowed, remaining = await client.rate_limit_check("user-1", window_seconds=60, max_requests=10)
+        allowed, remaining = await client.rate_limit_check(
+            "user-1", window_seconds=60, max_requests=10
+        )
         assert allowed is True
         assert remaining == 9
 
     async def test_rate_limit_tracks_multiple_requests(self, fake_redis):
         client = AgentOpsRedisClient(fake_redis)
         for _ in range(5):
-            allowed, remaining = await client.rate_limit_check("user-2", window_seconds=60, max_requests=5)
+            allowed, remaining = await client.rate_limit_check(
+                "user-2", window_seconds=60, max_requests=5
+            )
 
         # 5th request uses the last slot
         assert allowed is True
@@ -87,7 +92,9 @@ class TestRateLimiter:
         for _ in range(3):
             await client.rate_limit_check("user-block", window_seconds=60, max_requests=3)
         # Next request should be blocked
-        allowed, remaining = await client.rate_limit_check("user-block", window_seconds=60, max_requests=3)
+        allowed, remaining = await client.rate_limit_check(
+            "user-block", window_seconds=60, max_requests=3
+        )
         assert allowed is False
         assert remaining == 0
 

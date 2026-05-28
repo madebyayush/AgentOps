@@ -18,6 +18,7 @@ Usage:
 The middleware version (below) is a thin Starlette wrapper for routes
 that don't inject the Redis dependency directly.
 """
+
 from __future__ import annotations
 
 import logging

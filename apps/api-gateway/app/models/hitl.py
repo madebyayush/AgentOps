@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for Human-in-the-Loop resources."""
+
 from __future__ import annotations
 
 import uuid
@@ -26,8 +27,11 @@ class HitlRequestResponse(BaseModel):
 
 class HitlDecisionRequest(BaseModel):
     """Body for approve / reject endpoints."""
+
     approved_by: str = Field(
-        ..., min_length=1, max_length=255,
+        ...,
+        min_length=1,
+        max_length=255,
         description="Username or user ID of the human reviewer.",
     )
     rejection_reason: str | None = Field(

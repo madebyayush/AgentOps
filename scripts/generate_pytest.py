@@ -9,6 +9,7 @@ This script parses any FastAPI router file using python's AST module, extracts
 the router endpoints (GET, POST, PATCH, etc.), and generates a fully scaffolded,
 premium, robust Pytest test suite, integrated with boilerplate mocks.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -20,14 +21,23 @@ from pathlib import Path
 
 class RouteVisitor(ast.NodeVisitor):
     """AST visitor to extract router decorators and endpoint metadata."""
+
     def __init__(self):
         self.routes = []
         self.prefix = ""
 
     def visit_Assign(self, node: ast.Assign):
         # Detect: router = APIRouter(prefix="/tools", ...)
-        if len(node.targets) == 1 and isinstance(node.targets[0], ast.Name) and node.targets[0].id == "router":
-            if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id == "APIRouter":
+        if (
+            len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+            and node.targets[0].id == "router"
+        ):
+            if (
+                isinstance(node.value, ast.Call)
+                and isinstance(node.value.func, ast.Name)
+                and node.value.func.id == "APIRouter"
+            ):
                 for kw in node.value.keywords:
                     if kw.arg == "prefix" and isinstance(kw.value, ast.Constant):
                         self.prefix = kw.value.value
@@ -39,13 +49,19 @@ class RouteVisitor(ast.NodeVisitor):
             if self._is_router_decorator(decorator):
                 http_method, path = self._parse_decorator(decorator)
                 if http_method:
-                    self.routes.append({
-                        "name": node.name,
-                        "method": http_method,
-                        "path": path,
-                        "args": [arg.arg for arg in node.args.args if arg.arg not in ("db", "user", "self", "_rl")],
-                        "body_param": self._get_body_param_class(node)
-                    })
+                    self.routes.append(
+                        {
+                            "name": node.name,
+                            "method": http_method,
+                            "path": path,
+                            "args": [
+                                arg.arg
+                                for arg in node.args.args
+                                if arg.arg not in ("db", "user", "self", "_rl")
+                            ],
+                            "body_param": self._get_body_param_class(node),
+                        }
+                    )
         self.generic_visit(node)
 
     def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef):
@@ -53,8 +69,13 @@ class RouteVisitor(ast.NodeVisitor):
 
     def _is_router_decorator(self, decorator) -> bool:
         # Case: @router.get(...)
-        if isinstance(decorator, ast.Call) and isinstance(decorator.func, ast.Attribute):
-            if isinstance(decorator.func.value, ast.Name) and decorator.func.value.id == "router":
+        if isinstance(decorator, ast.Call) and isinstance(
+            decorator.func, ast.Attribute
+        ):
+            if (
+                isinstance(decorator.func.value, ast.Name)
+                and decorator.func.value.id == "router"
+            ):
                 return True
         return False
 
@@ -81,7 +102,9 @@ class RouteVisitor(ast.NodeVisitor):
                     return arg.annotation.id
             # Fallback check if parameter name itself is descriptive and has class annotation
             elif arg.annotation and isinstance(arg.annotation, ast.Name):
-                if arg.annotation.id.endswith("Request") or arg.annotation.id.endswith("Create"):
+                if arg.annotation.id.endswith("Request") or arg.annotation.id.endswith(
+                    "Create"
+                ):
                     return arg.annotation.id
         return None
 
@@ -92,25 +115,27 @@ def generate_boilerplate_code(router_name: str, routes: list[dict], prefix: str)
 
     output = []
     output.append(f'"""')
-    output.append(f'Generated Pytest Suite for {router_name.title()} Router')
-    output.append(f'=============================================')
-    output.append(f'This suite covers standard routing integration, security blocks,')
-    output.append(f'invalid payloads, and operational CRUD patterns.')
+    output.append(f"Generated Pytest Suite for {router_name.title()} Router")
+    output.append(f"=============================================")
+    output.append(f"This suite covers standard routing integration, security blocks,")
+    output.append(f"invalid payloads, and operational CRUD patterns.")
     output.append(f'"""')
-    output.append(f'from __future__ import annotations')
-    output.append(f'')
-    output.append(f'import uuid')
-    output.append(f'import pytest')
-    output.append(f'from httpx import AsyncClient')
-    output.append(f'from sqlalchemy.ext.asyncio import AsyncSession')
-    output.append(f'')
-    output.append(f'# Importing standardized premium mocks for test execution')
-    output.append(f'from tests.boilerplate_mocks import MockAsyncSession, MockRedisClient, MockLLMClient')
-    output.append(f'')
-    output.append(f'')
-    output.append(f'@pytest.mark.asyncio')
-    output.append(f'class {module_class_name}:')
-    output.append(f'')
+    output.append(f"from __future__ import annotations")
+    output.append(f"")
+    output.append(f"import uuid")
+    output.append(f"import pytest")
+    output.append(f"from httpx import AsyncClient")
+    output.append(f"from sqlalchemy.ext.asyncio import AsyncSession")
+    output.append(f"")
+    output.append(f"# Importing standardized premium mocks for test execution")
+    output.append(
+        f"from tests.boilerplate_mocks import MockAsyncSession, MockRedisClient, MockLLMClient"
+    )
+    output.append(f"")
+    output.append(f"")
+    output.append(f"@pytest.mark.asyncio")
+    output.append(f"class {module_class_name}:")
+    output.append(f"")
 
     for route in routes:
         name = route["name"]
@@ -138,85 +163,113 @@ def generate_boilerplate_code(router_name: str, routes: list[dict], prefix: str)
             url_base = f"{full_prefix}/{path_str}"
 
         # 1. Success Path
-        output.append(f'    async def test_{name}_success(')
-        output.append(f'        self, client: AsyncClient, db_session: AsyncSession')
-        output.append(f'    ):')
+        output.append(f"    async def test_{name}_success(")
+        output.append(f"        self, client: AsyncClient, db_session: AsyncSession")
+        output.append(f"    ):")
         output.append(f'        """')
-        output.append(f'        Success track for {method} {path}')
+        output.append(f"        Success track for {method} {path}")
         output.append(f'        """')
         if path_interpolated:
             # Generate a mock uuid or mock name for placeholder
             var_name = path.split("{")[1].split("}")[0]
-            output.append(f'        mock_{var_name} = uuid.uuid4()')
-            output.append(f'        url = "{url_base}".replace("{path}", str(mock_{var_name}))')
+            output.append(f"        mock_{var_name} = uuid.uuid4()")
+            output.append(
+                f'        url = "{url_base}".replace("{path}", str(mock_{var_name}))'
+            )
         else:
             output.append(f'        url = "{url_base}"')
 
         # Request call block
         if method == "POST" or method == "PUT" or method == "PATCH":
-            output.append(f'        payload = {{}}  # TODO: Populate with simulated {body_param}')
-            output.append(f'        resp = await client.{method.lower()}(url, json=payload)')
+            output.append(
+                f"        payload = {{}}  # TODO: Populate with simulated {body_param}"
+            )
+            output.append(
+                f"        resp = await client.{method.lower()}(url, json=payload)"
+            )
         else:
-            output.append(f'        resp = await client.{method.lower()}(url)')
+            output.append(f"        resp = await client.{method.lower()}(url)")
 
-        output.append(f'        # Assert response characteristics')
-        output.append(f'        assert resp.status_code in (200, 201, 202)')
-        output.append(f'        data = resp.json()')
-        output.append(f'        assert data is not None')
-        output.append(f'')
+        output.append(f"        # Assert response characteristics")
+        output.append(f"        assert resp.status_code in (200, 201, 202)")
+        output.append(f"        data = resp.json()")
+        output.append(f"        assert data is not None")
+        output.append(f"")
 
         # 2. Unauthorized Block
-        output.append(f'    async def test_{name}_unauthorized(')
-        output.append(f'        self, anon_client: AsyncClient')
-        output.append(f'    ):')
+        output.append(f"    async def test_{name}_unauthorized(")
+        output.append(f"        self, anon_client: AsyncClient")
+        output.append(f"    ):")
         output.append(f'        """')
-        output.append(f'        Unauthenticated block ensuring API token compliance')
+        output.append(f"        Unauthenticated block ensuring API token compliance")
         output.append(f'        """')
         if path_interpolated:
             var_name = path.split("{")[1].split("}")[0]
-            output.append(f'        url = "{url_base}".replace("{path}", str(uuid.uuid4()))')
+            output.append(
+                f'        url = "{url_base}".replace("{path}", str(uuid.uuid4()))'
+            )
         else:
             output.append(f'        url = "{url_base}"')
 
         if method in ("POST", "PUT", "PATCH"):
-            output.append(f'        resp = await anon_client.{method.lower()}(url, json={{}})')
+            output.append(
+                f"        resp = await anon_client.{method.lower()}(url, json={{}})"
+            )
         else:
-            output.append(f'        resp = await anon_client.{method.lower()}(url)')
+            output.append(f"        resp = await anon_client.{method.lower()}(url)")
 
-        output.append(f'        assert resp.status_code == 401')
-        output.append(f'')
+        output.append(f"        assert resp.status_code == 401")
+        output.append(f"")
 
         # 3. Validation / Error block for operations with inputs
         if method in ("POST", "PUT", "PATCH") and body_param != "dict":
-            output.append(f'    async def test_{name}_invalid_payload(')
-            output.append(f'        self, client: AsyncClient')
-            output.append(f'    ):')
+            output.append(f"    async def test_{name}_invalid_payload(")
+            output.append(f"        self, client: AsyncClient")
+            output.append(f"    ):")
             output.append(f'        """')
-            output.append(f'        Malformed body triggers standard 422 Unprocessable entity response')
+            output.append(
+                f"        Malformed body triggers standard 422 Unprocessable entity response"
+            )
             output.append(f'        """')
             if path_interpolated:
-                output.append(f'        url = "{url_base}".replace("{path}", str(uuid.uuid4()))')
+                output.append(
+                    f'        url = "{url_base}".replace("{path}", str(uuid.uuid4()))'
+                )
             else:
                 output.append(f'        url = "{url_base}"')
 
             # Empty payload or mismatched types
             output.append(f'        invalid_payload = {{"invalid_key_trigger": True}}')
-            output.append(f'        resp = await client.{method.lower()}(url, json=invalid_payload)')
-            output.append(f'        assert resp.status_code == 422')
-            output.append(f'')
+            output.append(
+                f"        resp = await client.{method.lower()}(url, json=invalid_payload)"
+            )
+            output.append(f"        assert resp.status_code == 422")
+            output.append(f"")
 
     return "\n".join(output)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="AgentOps Pytest Boilerplate Code Scaffolder.")
-    parser.add_argument("--router", type=str, required=True, help="Absolute or relative path to the FastAPI router python file.")
-    parser.add_argument("--output", type=str, help="Target location to write the generated pytest file.")
+    parser = argparse.ArgumentParser(
+        description="AgentOps Pytest Boilerplate Code Scaffolder."
+    )
+    parser.add_argument(
+        "--router",
+        type=str,
+        required=True,
+        help="Absolute or relative path to the FastAPI router python file.",
+    )
+    parser.add_argument(
+        "--output", type=str, help="Target location to write the generated pytest file."
+    )
     args = parser.parse_args()
 
     router_path = Path(args.router)
     if not router_path.exists():
-        print(f"Error: Target router file '{router_path}' does not exist.", file=sys.stderr)
+        print(
+            f"Error: Target router file '{router_path}' does not exist.",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     print(f"Parsing AST for router: {router_path}...")
@@ -224,14 +277,18 @@ def main():
         content = router_path.read_text(encoding="utf-8")
         tree = ast.parse(content)
     except Exception as e:
-        print(f"FATAL: Could not parse target AST structure. Error: {e}", file=sys.stderr)
+        print(
+            f"FATAL: Could not parse target AST structure. Error: {e}", file=sys.stderr
+        )
         sys.exit(1)
 
     visitor = RouteVisitor()
     visitor.visit(tree)
 
     if not visitor.routes:
-        print(f"Warning: No routes decorated with '@router.<method>' found in the provided file.")
+        print(
+            f"Warning: No routes decorated with '@router.<method>' found in the provided file."
+        )
         sys.exit(0)
 
     print(f"Detected {len(visitor.routes)} route(s):")
@@ -239,7 +296,9 @@ def main():
         print(f"  - {r['method']} {r['path']} -> {r['name']}()")
 
     router_name = router_path.stem
-    generated_code = generate_boilerplate_code(router_name, visitor.routes, visitor.prefix)
+    generated_code = generate_boilerplate_code(
+        router_name, visitor.routes, visitor.prefix
+    )
 
     output_path = args.output
     if not output_path:

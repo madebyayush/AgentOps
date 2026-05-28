@@ -7,6 +7,7 @@ Endpoints:
   POST /hitl/{id}/approve  — approve the proposed action
   POST /hitl/{id}/reject   — reject the proposed action
 """
+
 from __future__ import annotations
 
 import logging
@@ -27,7 +28,9 @@ log = logging.getLogger("agentops.routers.hitl")
 router = APIRouter(prefix="/hitl", tags=["Human-in-the-Loop"])
 
 
-@router.get("/pending", response_model=list[HitlRequestResponse], summary="List pending HITL requests")
+@router.get(
+    "/pending", response_model=list[HitlRequestResponse], summary="List pending HITL requests"
+)
 async def list_pending(
     db: AsyncSession = Depends(get_db),
     user: dict = Depends(get_current_user),
@@ -94,7 +97,10 @@ async def _decide(
     )
     log.info(
         "HITL %s: id=%s run_id=%s by=%s",
-        decision, hitl_id, req.run_id, user["sub"],
+        decision,
+        hitl_id,
+        req.run_id,
+        user["sub"],
     )
     return HitlRequestResponse.model_validate(req)
 

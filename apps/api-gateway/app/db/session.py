@@ -4,6 +4,7 @@ Lazily creates the engine on first call to get_engine() or get_db().
 This deferred pattern ensures Settings() is NOT called at import time,
 allowing tests to set env vars before any app module is loaded.
 """
+
 from __future__ import annotations
 
 import logging
@@ -29,6 +30,7 @@ def get_engine() -> AsyncEngine:
     global _engine
     if _engine is None:
         from app.config import get_settings
+
         settings = get_settings()
         _engine = create_async_engine(
             settings.async_postgres_url,
@@ -59,6 +61,7 @@ def get_session_factory() -> async_sessionmaker[AsyncSession]:
 # Compatibility alias — used in db/__init__.py
 def _get_async_session_local() -> async_sessionmaker[AsyncSession]:
     return get_session_factory()
+
 
 AsyncSessionLocal = _get_async_session_local  # callable that returns the factory
 

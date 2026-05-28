@@ -1,4 +1,5 @@
 """Pydantic v2 schemas for Tool resources."""
+
 from __future__ import annotations
 
 import uuid

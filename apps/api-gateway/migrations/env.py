@@ -7,6 +7,7 @@ Key design points:
   - Uses asyncio.run() to drive async migrations
   - Imports Base.metadata so autogenerate can diff all 8 models
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -37,12 +38,14 @@ target_metadata = Base.metadata
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+
 def get_url() -> str:
     """Return the async-compatible PostgreSQL URL from settings."""
     return get_settings().async_postgres_url
 
 
 # ── Offline migrations (generate SQL script without a live DB) ────────────────
+
 
 def run_migrations_offline() -> None:
     """
@@ -63,6 +66,7 @@ def run_migrations_offline() -> None:
 
 
 # ── Online migrations (runs against a live DB) ────────────────────────────────
+
 
 def do_run_migrations(connection):  # type: ignore[no-untyped-def]
     context.configure(

@@ -2,6 +2,7 @@
 CRUD — Memory endpoints
 Tests: namespace listing, create entry, list in namespace, delete, pagination.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -16,7 +17,11 @@ class TestMemoryCreate:
     async def test_create_memory_entry(self, client: AsyncClient):
         resp = await client.post(
             "/api/v1/memory",
-            json={"namespace": "user-prefs", "content": "User prefers dark mode", "metadata": {"tag": "ui"}},
+            json={
+                "namespace": "user-prefs",
+                "content": "User prefers dark mode",
+                "metadata": {"tag": "ui"},
+            },
         )
         assert resp.status_code == 201
         data = resp.json()
@@ -50,8 +55,12 @@ class TestMemoryList:
 
     async def test_list_namespace_entries(self, client: AsyncClient):
         # Seed two entries in the same namespace
-        await client.post("/api/v1/memory", json={"namespace": "ns-list-test", "content": "Entry 1"})
-        await client.post("/api/v1/memory", json={"namespace": "ns-list-test", "content": "Entry 2"})
+        await client.post(
+            "/api/v1/memory", json={"namespace": "ns-list-test", "content": "Entry 1"}
+        )
+        await client.post(
+            "/api/v1/memory", json={"namespace": "ns-list-test", "content": "Entry 2"}
+        )
 
         resp = await client.get("/api/v1/memory/ns-list-test")
         assert resp.status_code == 200

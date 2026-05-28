@@ -1,6 +1,7 @@
 """
 Common / shared Pydantic v2 schemas used across multiple routers.
 """
+
 from __future__ import annotations
 
 from typing import Generic, TypeVar
@@ -12,6 +13,7 @@ DataT = TypeVar("DataT")
 
 class PaginatedResponse(BaseModel, Generic[DataT]):
     """Generic paginated list wrapper."""
+
     items: list[DataT]
     total: int
     page: int = Field(ge=1)
@@ -23,6 +25,7 @@ class PaginatedResponse(BaseModel, Generic[DataT]):
 
 class ErrorDetail(BaseModel):
     """Standard error response body."""
+
     code: str
     message: str
     detail: dict | None = None
@@ -30,6 +33,7 @@ class ErrorDetail(BaseModel):
 
 class HealthResponse(BaseModel):
     """Liveness / readiness probe response."""
+
     status: str
     service: str
     environment: str
