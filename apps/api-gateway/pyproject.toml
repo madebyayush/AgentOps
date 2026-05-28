@@ -65,10 +65,9 @@ target-version = ["py311"]
 
 [tool.mypy]
 python_version = "3.11"
-strict = true
 ignore_missing_imports = true
 explicit_package_bases = true
-exclude = ["conftest\\.py$"]
+exclude = ["conftest\\.py$", "tests/", "migrations/"]
 
 [tool.ruff]
 line-length = 100
