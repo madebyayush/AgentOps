@@ -34,13 +34,13 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     # ── Database ──────────────────────────────────────────────────────────────
-    POSTGRES_URL: str  # mandatory — asyncpg dialect set in session.py
+    POSTGRES_URL: str = ""  # mandatory — asyncpg dialect set in session.py
     DB_POOL_SIZE: int = 10
     DB_MAX_OVERFLOW: int = 20
     DB_POOL_TIMEOUT: int = 30
 
     # ── Redis ─────────────────────────────────────────────────────────────────
-    REDIS_URL: str  # mandatory
+    REDIS_URL: str = ""  # mandatory
     REDIS_DEFAULT_TTL: int = 3600  # seconds
 
     # ── Auth ──────────────────────────────────────────────────────────────────
