@@ -43,14 +43,14 @@ jobs:
       - name: Lint api-gateway package structures
         run: |
           cd apps/api-gateway
-          poetry install
+          poetry install --no-root
           poetry run black --check .
           poetry run mypy . --ignore-missing-imports
 
       - name: Lint agent-runtime package structures
         run: |
           cd apps/agent-runtime
-          poetry install
+          poetry install --no-root
           poetry run black --check .
           poetry run mypy . --ignore-missing-imports
 
