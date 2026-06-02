@@ -119,6 +119,10 @@ async def planner_node(state: "AgentState") -> dict[str, Any]:
     """
     log.info("[node:planner] run=%s", state["run_id"])
 
+    if state.get("error"):
+        log.info("[node:planner] Error found in state, skipping planning.")
+        return {}
+
     memory_ctx = "\n".join(state.get("memory_context", []))
     system = (
         "You are a planning expert. Decompose the given task into clear, "
@@ -152,6 +156,10 @@ async def tool_executor_node(state: "AgentState") -> dict[str, Any]:
     if current_step >= len(plan):
         log.info("[node:tool_executor] All steps complete for run=%s", state["run_id"])
         return {}  # Nothing to do — graph will route to output
+
+    if state.get("error") or state.get("hitl_pending"):
+        log.info("[node:tool_executor] Error or HITL pending for run=%s, skipping tool execution.", state["run_id"])
+        return {}
 
     step = plan[current_step]
     log.info(
@@ -244,6 +252,14 @@ async def reflection_node(state: "AgentState") -> dict[str, Any]:
     Sets recommendation: continue | retry | escalate_hitl | abort
     """
     log.info("[node:reflection] run=%s", state["run_id"])
+
+    if state.get("error") or state.get("hitl_pending"):
+        err_msg = state.get("error") or "Human-in-the-loop approval pending."
+        log.info("[node:reflection] Error or HITL pending for run=%s, aborting with error.", state["run_id"])
+        return {
+            "reflection": f"ABORT: {err_msg}",
+            "error": err_msg,
+        }
 
     tool_calls = state.get("tool_calls", [])
     observations = state.get("observations", [])
