@@ -16,7 +16,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
@@ -133,6 +132,7 @@ class TestReActLoop:
             combined = exec2["tool_calls"]
 
         assert len(combined) == 2
+
     @pytest.mark.asyncio
     async def test_react_loop_memory_context_fed_to_planner(self, sample_state):
         """Memory context retrieved in step 1 is visible to the planner."""
@@ -214,9 +214,7 @@ class TestReflectionRetries:
         recommendations = []
         for i in range(MAX_RETRIES + 1):
             sample_state["retry_count"] = i
-            with patch(
-                "agent.nodes._call_llm", new_callable=AsyncMock, return_value=LOGIC_FAIL
-            ):
+            with patch("agent.nodes._call_llm", new_callable=AsyncMock, return_value=LOGIC_FAIL):
                 result = await reflection_node(sample_state)
             recommendations.append(result["reflection"])
 
@@ -525,9 +523,7 @@ class TestFailureHandling:
         bad_tool_response = json.dumps(
             {"tool": "nonexistent_tool_xyz", "arguments": {}, "direct_output": ""}
         )
-        with patch(
-            "agent.nodes._call_llm", new_callable=AsyncMock, return_value=bad_tool_response
-        ):
+        with patch("agent.nodes._call_llm", new_callable=AsyncMock, return_value=bad_tool_response):
             result = await tool_executor_node(sample_state)
 
         assert len(result["tool_calls"]) == 1
@@ -598,9 +594,7 @@ class TestFailureHandling:
         sample_state["tool_calls"] = [_tool_call()]
         sample_state["observations"] = ["some result"]
 
-        with patch(
-            "agent.nodes._call_llm", new_callable=AsyncMock, return_value="not json at all"
-        ):
+        with patch("agent.nodes._call_llm", new_callable=AsyncMock, return_value="not json at all"):
             result = await reflection_node(sample_state)
 
         # Should not raise; with sound defaulting to True → CONTINUE

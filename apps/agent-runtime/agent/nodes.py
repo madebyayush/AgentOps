@@ -158,7 +158,10 @@ async def tool_executor_node(state: "AgentState") -> dict[str, Any]:
         return {}  # Nothing to do — graph will route to output
 
     if state.get("error") or state.get("hitl_pending"):
-        log.info("[node:tool_executor] Error or HITL pending for run=%s, skipping tool execution.", state["run_id"])
+        log.info(
+            "[node:tool_executor] Error or HITL pending for run=%s, skipping tool execution.",
+            state["run_id"],
+        )
         return {}
 
     step = plan[current_step]
@@ -255,7 +258,10 @@ async def reflection_node(state: "AgentState") -> dict[str, Any]:
 
     if state.get("error") or state.get("hitl_pending"):
         err_msg = state.get("error") or "Human-in-the-loop approval pending."
-        log.info("[node:reflection] Error or HITL pending for run=%s, aborting with error.", state["run_id"])
+        log.info(
+            "[node:reflection] Error or HITL pending for run=%s, aborting with error.",
+            state["run_id"],
+        )
         return {
             "reflection": f"ABORT: {err_msg}",
             "error": err_msg,
