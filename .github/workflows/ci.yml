@@ -95,7 +95,7 @@ jobs:
           pip install \
             pydantic python-dotenv redis hiredis httpx \
             opentelemetry-api opentelemetry-sdk \
-            "langgraph>=0.1.0" "langchain-core>=0.2.0" \
+            "langgraph>=0.1.0" "langgraph-checkpoint-sqlite>=1.0.0" "langchain-core>=0.2.0" \
             "langchain-openai>=0.1.0" "langchain-anthropic>=0.1.0" \
             "openai>=1.30.0" \
             "pytest>=8.1.1" "pytest-asyncio>=0.23.6" "pytest-cov>=5.0.0" \
