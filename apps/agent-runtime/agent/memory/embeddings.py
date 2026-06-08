@@ -38,7 +38,7 @@ class EmbeddingModel:
     def __init__(self, api_key: Optional[str] = None) -> None:
         self._api_key = api_key or os.getenv("OPENAI_API_KEY")
         self._client: Optional[object] = None
-        if self._api_key:
+        if self._api_key and not self._api_key.startswith("sk-stub"):
             try:
                 from openai import AsyncOpenAI
 
@@ -47,7 +47,7 @@ class EmbeddingModel:
             except ImportError:
                 log.warning("openai package not installed — falling back to stub embeddings")
         else:
-            log.info("EmbeddingModel: OPENAI_API_KEY absent — using deterministic stub")
+            log.info("EmbeddingModel: OPENAI_API_KEY absent or stub — using deterministic stub")
 
     async def embed(self, text: str) -> list[float]:
         """Return a 1536-dim embedding vector for *text*."""
