@@ -1,0 +1,49 @@
+================================================================================
+AGENTOPS PHASE 2 — AGENT EXECUTION ENGINE: METRICS & SPECIFICATION NUMBERS
+================================================================================
+
+This document notes all system configurations, thresholds, parameters, and 
+testing metrics derived during the implementation of Phase 2 (Agent Execution Engine).
+
+--------------------------------------------------------------------------------
+1. STATE MACHINE & GRAPH STRUCTURE (LangGraph)
+--------------------------------------------------------------------------------
+* Total Execution Nodes         : 6 nodes (memory_retrieval, planner, tool_executor, 
+                                  reflection, hitl_checkpoint, output)
+* Shared State Schema           : 14 typed fields in AgentState TypedDict
+* Routing Actions               : 4 possible branches (continue, retry, 
+                                  escalate_hitl, abort)
+
+--------------------------------------------------------------------------------
+2. REFLECTION & RETRY POLICIES
+--------------------------------------------------------------------------------
+* Maximum Reflection Retries    : 3 retries (MAX_RETRIES = 3)
+* HITL Escalation Threshold     : pause and route to hitl_checkpoint after 3 
+                                  consecutive failures on a single step
+
+--------------------------------------------------------------------------------
+3. SANDBOX & TOOL CONSTRAINTS
+--------------------------------------------------------------------------------
+* CodeRunnerTool (Python Sandbox):
+  - Execution Timeout           : 10 seconds (MAX_EXEC_SECONDS = 10)
+  - Output Character Limit      : 4000 characters (MAX_OUTPUT_CHARS = 4000)
+  - Safe Python Builtins Allowed: 27 safe functions (print, len, range, int, float, etc.)
+  - Network & Filesystem Access : Blocked
+
+* FileReaderTool (Workspace IO) :
+  - Allowed Actions             : 3 operations (read, write, list)
+  - Default Workspace Path      : /tmp/agentops_workspace (overridden via AGENT_WORKSPACE)
+  - Path-Traversal Guard        : Strict directory boundary isolation
+
+* SqlRunnerTool (Read-Only SQL) :
+  - Default Row Limit           : 50 rows
+  - Blocklisted DML Keywords    : 11 keywords (INSERT, UPDATE, DELETE, DROP, CREATE, 
+                                  ALTER, TRUNCATE, EXEC, EXECUTE, GRANT, REVOKE)
+
+--------------------------------------------------------------------------------
+4. TESTING & VERIFICATION SUITE RESULTS
+--------------------------------------------------------------------------------
+* Total Test Cases Checked      : 80 items
+* Unit Test Results             : 80 Passed / 0 Failed (all edge/ReAct cycles)
+* Local Execution Duration      : ~0.78s - 0.80s
+================================================================================
