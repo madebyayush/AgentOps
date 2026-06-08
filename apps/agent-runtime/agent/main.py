@@ -95,12 +95,14 @@ class AgentRuntimeEngine:
         initial_state: AgentState = {
             "run_id": run_id,
             "agent_name": agent_name,
+            "session_id": run_id,  # default session == run; override for multi-turn
             "task": task,
             "plan": [],
             "current_step": 0,
             "tool_calls": [],
             "observations": [],
             "memory_context": [],
+            "memory_citations": [],
             "reflection": "",
             "retry_count": 0,
             "hitl_pending": False,

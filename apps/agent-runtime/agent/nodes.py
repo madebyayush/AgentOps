@@ -24,7 +24,7 @@ import logging
 import os
 import time
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Optional
 
 # Import AgentState at runtime so get_type_hints() can resolve it
 # when LangGraph inspects reflection_router's signature.
