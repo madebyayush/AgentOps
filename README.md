@@ -82,6 +82,24 @@ The core asynchronous cognitive agent execution loop has been fully built, optim
 
 ---
 
+## 💾 Phase 3 — Multi-Tier Memory Subsystem
+
+A comprehensive, four-tier memory system designed for agent context, session history, execution durability, and self-improving tools:
+
+### 1. Semantic & Episodic Memory Tiers
+- **Semantic Memory (Long-term)**: Connects to a real Pinecone serverless database (`agentops-memory` index) using OpenAI's `text-embedding-3-small` (1536-dim) model. In offline/dev mode, it automatically engages an `InMemoryVectorStore` with exact cosine-similarity calculations and a deterministic embedding stub.
+- **Episodic Memory (Short-term)**: Implements fast Redis lists to capture and cap the last **20** interactions per agent namespace, along with a durable Redis Streams logger for telemetry pub/sub event tracking.
+
+### 2. Working & Procedural Memory Tiers
+- **Working Memory (Persistence)**: Serializes full `AgentState` snapshots into Redis using `orjson` at run boundaries with a default **24-hour TTL**, providing crash recovery and REST inspection endpoints.
+- **Procedural Memory (Self-Improving Tools)**: Integrates PostgreSQL tool execution logging. Tracks call counts, failure rates, and execution latencies. Features an **Auto-Disable Policy** which automatically disables any tool with an error rate exceeding **30%** (evaluated after a minimum sample size of **10 calls**).
+
+### 3. Integrated RAG Pipeline
+- Combines Semantic Retrieval (top-10 chunks), Cross-Encoder Reranking (via Cohere / score-passthrough top-5 relevance), and system prompt context injection with chunk-level audit citations.
+
+---
+
+
 ## 🛠️ Developer Velocity & Testing Engine
 
 To maintain high development speed, I've introduced dedicated developer testing tools under `apps/api-gateway`:
@@ -104,10 +122,10 @@ This auto-generates `test_generated_tools.py` under the `tests/` folder checking
 
 ## 🧪 Running the Test Suite
 
-Pipeline runs completely isolated from live PostgreSQL/Redis backends by leveraging **in-memory SQLite (`aiosqlite`)** and **`fakeredis`** context pools, executing all tests in under 4 seconds.
+All services are fully tested with unit and integration tests, designed to run isolated from live backends by leveraging in-memory/mock utilities (like SQLite, `fakeredis`, and API client stubs).
 
-### Quick Start (Local Verification)
-1. Navigate to the API gateway:
+### 1. API Gateway Test Suite (FastAPI)
+1. Navigate to the API gateway directory:
    ```bash
    cd apps/api-gateway
    ```
@@ -115,12 +133,28 @@ Pipeline runs completely isolated from live PostgreSQL/Redis backends by leverag
    ```bash
    pip install -r pyproject.toml
    ```
-3. Run the comprehensive test suite (147 test cases):
+3. Run the API test cases:
    ```bash
    python -m pytest tests/ -v
    ```
 
+### 2. Agent Runtime Test Suite (LangGraph & Memory)
+1. Navigate to the agent runtime directory:
+   ```bash
+   cd apps/agent-runtime
+   ```
+2. Install dependencies:
+   ```bash
+   pip install -r pyproject.toml
+   ```
+3. Run the memory and engine test cases:
+   ```bash
+   python -m pytest tests/ -v --asyncio-mode=auto
+   ```
+   *(Note: 150 tests will pass locally. 3 PostgreSQL integration tests will skip if a local Postgres is not running; these run fully in CI.)*
+
 ---
+
 
 ## 🌐 Local Dev Infrastructure Setup
 
