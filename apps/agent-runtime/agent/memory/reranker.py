@@ -36,7 +36,11 @@ class CrossEncoderReranker:
         self._api_key = api_key or os.getenv("COHERE_API_KEY")
         self._client: Optional[object] = None
 
-        if self._api_key and not self._api_key.startswith("co-stub") and not self._api_key.startswith("sk-stub"):
+        if (
+            self._api_key
+            and not self._api_key.startswith("co-stub")
+            and not self._api_key.startswith("sk-stub")
+        ):
             try:
                 import cohere
 
@@ -45,7 +49,9 @@ class CrossEncoderReranker:
             except ImportError:
                 log.warning("cohere package not installed — falling back to score-passthrough stub")
         else:
-            log.info("CrossEncoderReranker: COHERE_API_KEY absent or stub — using score-passthrough stub")
+            log.info(
+                "CrossEncoderReranker: COHERE_API_KEY absent or stub — using score-passthrough stub"
+            )
 
     async def rerank(
         self,
