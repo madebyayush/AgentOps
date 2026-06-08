@@ -1,0 +1,54 @@
+================================================================================
+AGENTOPS PHASE 3 — MEMORY SUBSYSTEM: METRICS & SPECIFICATION NUMBERS
+================================================================================
+
+This document notes all system configurations, thresholds, parameters, and 
+testing metrics derived during the implementation of Phase 3 (Memory Subsystem).
+
+--------------------------------------------------------------------------------
+1. SEMANTIC MEMORY (Long-Term, Pinecone)
+--------------------------------------------------------------------------------
+* Embedding Model               : OpenAI 'text-embedding-3-small' (or deterministic stub)
+* Vector Dimension              : 1536 float values
+* Index Name                    : 'agentops-memory'
+* Namespace Pattern             : 'nexus-{agent_name}'
+* Retrieval top-K (Pinecone)    : 10 chunks (top-10 initial retrieval count)
+* Reranked top-K (Cohere)       : 5 chunks (final count injected into system prompt)
+* Cross-Encoder Reranker Model  : 'rerank-english-v3.0' (or score-aware passthrough stub)
+
+--------------------------------------------------------------------------------
+2. EPISODIC MEMORY (Short-Term, Redis)
+--------------------------------------------------------------------------------
+* Interaction Cap (Last-N)      : 20 interactions per session (capped via LTRIM)
+* Key Schema (Lists)            : 'nexus:episodic:{agent_id}:{session_id}'
+* Event Stream Max Length       : 1000 approximate entries (capped via XADD MAXLEN)
+* Key Schema (Streams)          : 'nexus:stream:{agent_id}'
+
+--------------------------------------------------------------------------------
+3. WORKING MEMORY (Run State Persistence, Redis)
+--------------------------------------------------------------------------------
+* Key Schema                    : 'nexus:state:{run_id}'
+* Default Expiry (TTL)          : 24 hours (86,400 seconds)
+
+--------------------------------------------------------------------------------
+4. PROCEDURAL MEMORY (Tool Execution Statistics, PostgreSQL)
+--------------------------------------------------------------------------------
+* PostgreSQL Version            : 16 (in Docker/CI services)
+* Minimum Call Sample size      : 10 calls (minimum calls required before evaluation)
+* Auto-disable Error Threshold  : > 30% (error_rate > 0.3)
+* Metrics Tracked per Tool      : 
+  - call_count                  : total number of invocations
+  - error_count                 : total number of failed invocations
+  - total_latency_ms            : cumulative execution time in milliseconds
+  - success_rate / error_rate   : dynamically computed ratios
+
+--------------------------------------------------------------------------------
+5. TESTING & VERIFICATION SUITE RESULTS
+--------------------------------------------------------------------------------
+* Total Test Cases Checked      : 153 items
+* Unit Test Results             :
+  - 150 Passed (Offline & Stub tiers)
+  - 3 Skipped (PostgreSQL integration tests requiring a running PostgreSQL server)
+* Local Execution Duration      : ~1.5s to 1.8s
+* CI Execution Duration         : ~1.67s (all 153 tests pass under real Postgres service)
+================================================================================
