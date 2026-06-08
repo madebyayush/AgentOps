@@ -60,6 +60,22 @@ jobs:
     name: Execution Tests & Probes
     runs-on: ubuntu-latest
     needs: code-hygiene
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: agentops_test
+          POSTGRES_USER: agentops
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout monorepo code
         uses: actions/checkout@v4
@@ -85,19 +101,22 @@ jobs:
             opentelemetry-sdk opentelemetry-instrumentation-fastapi orjson
           python -m pytest tests/ --ignore=tests/test_generated_tools.py -v
 
-      - name: Install dependencies and execute Agent Runtime Phase 2 Test Suite
+      - name: Install dependencies and execute Agent Runtime Phase 3 Test Suite
         env:
           # Stub keys so the runtime env check passes without real credentials
           OPENAI_API_KEY: sk-stub-openai-key-for-ci
+          # Real Postgres for ProceduralMemory integration tests
+          POSTGRES_URL: postgresql://agentops:test@localhost:5432/agentops_test
         run: |
           cd apps/agent-runtime
           python -m pip install --upgrade pip
           pip install \
-            pydantic python-dotenv redis hiredis httpx \
+            pydantic python-dotenv redis hiredis httpx orjson \
             opentelemetry-api opentelemetry-sdk \
             "langgraph>=0.1.0" "langgraph-checkpoint-sqlite>=1.0.0" "langchain-core>=0.2.0" \
             "langchain-openai>=0.1.0" "langchain-anthropic>=0.1.0" \
             "openai>=1.30.0" \
+            "asyncpg>=0.29.0" \
             "pytest>=8.1.1" "pytest-asyncio>=0.23.6" "pytest-cov>=5.0.0" \
             "fakeredis[aioredis]>=2.23.0" "anyio[trio]>=4.3.0" \
             "typing-extensions>=4.10.0"

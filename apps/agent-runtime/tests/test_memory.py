@@ -1,5 +1,5 @@
 """
-Tests for agent.memory — MemoryClient.
+Tests for agent.memory — MemoryClient backward-compat shim.
 """
 
 from __future__ import annotations
@@ -7,21 +7,23 @@ from __future__ import annotations
 import pytest
 
 from agent.memory import InMemoryVectorStore, MemoryClient
+from agent.memory.embeddings import EMBEDDING_DIM
 
 
 class TestInMemoryVectorStore:
     @pytest.mark.asyncio
     async def test_upsert_and_query(self):
         store = InMemoryVectorStore()
-        await store.upsert("ns1", "v1", [0.1] * 10, {"content": "hello"})
-        results = await store.query("ns1", [0.0] * 10, top_k=5)
+        vec = [0.1] * EMBEDDING_DIM
+        await store.upsert("ns1", "v1", vec, {"content": "hello"})
+        results = await store.query("ns1", vec, top_k=5)
         assert len(results) == 1
         assert results[0]["metadata"]["content"] == "hello"
 
     @pytest.mark.asyncio
     async def test_query_empty_namespace(self):
         store = InMemoryVectorStore()
-        results = await store.query("empty_ns", [0.0] * 5, top_k=3)
+        results = await store.query("empty_ns", [0.0] * EMBEDDING_DIM, top_k=3)
         assert results == []
 
 

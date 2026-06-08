@@ -77,12 +77,14 @@ def sample_state():
     return {
         "run_id": "test-run-001",
         "agent_name": "test_agent",
+        "session_id": "test-session-001",
         "task": "Write a Python function that returns the sum of two numbers.",
         "plan": ["Define the function", "Write the body", "Test the function"],
         "current_step": 0,
         "tool_calls": [],
         "observations": [],
         "memory_context": [],
+        "memory_citations": [],
         "reflection": "",
         "retry_count": 0,
         "hitl_pending": False,
@@ -117,3 +119,32 @@ def mock_llm():
     )
     with patch("agent.nodes._call_llm", new_callable=AsyncMock, return_value=plan_json) as m:
         yield m
+
+
+# ── Phase 3 fixtures ────────────────────────────────────────────────────────────────────
+
+
+@pytest.fixture
+def fake_procedural_memory():
+    """In-memory ProceduralMemory (no Postgres) for testing tools."""
+    from agent.memory.procedural import ProceduralMemory
+
+    return ProceduralMemory(postgres_url=None)
+
+
+@pytest.fixture
+def sample_memory_chunk():
+    """A MemoryChunk for testing reranker and RAG context builder."""
+    from agent.memory.semantic import MemoryChunk
+
+    return MemoryChunk(
+        chunk_id="chunk-test-001",
+        content="This is a test memory chunk about revenue data.",
+        score=0.85,
+        metadata={
+            "agent_id": "test-agent",
+            "source_type": "observation",
+            "task_id": "run-001",
+            "created_at": "2026-06-01T00:00:00Z",
+        },
+    )

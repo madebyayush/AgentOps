@@ -34,6 +34,50 @@ log = logging.getLogger("agentops.nodes")
 
 MAX_RETRIES = 3
 
+# ── Memory client singletons (initialised lazily per process) ─────────────────
+
+_semantic_memory: "Optional[Any]" = None
+_episodic_memory: "Optional[Any]" = None
+_working_memory: "Optional[Any]" = None
+
+
+def _get_memory_clients() -> tuple["Optional[Any]", "Optional[Any]", "Optional[Any]"]:
+    """
+    Lazily build SemanticMemory, EpisodicMemory, and WorkingMemory singletons.
+    Returns (semantic, episodic, working) — any may be None if dependencies
+    (env vars / packages) are missing.
+    """
+    global _semantic_memory, _episodic_memory, _working_memory
+    if _semantic_memory is not None or _episodic_memory is not None:
+        return _semantic_memory, _episodic_memory, _working_memory
+
+    agent_id = os.getenv("AGENT_ID", "default-agent")
+
+    # Semantic Memory
+    try:
+        from agent.memory import SemanticMemory
+
+        _semantic_memory = SemanticMemory(agent_id=agent_id)
+    except Exception as exc:
+        log.warning("SemanticMemory init failed: %s", exc)
+
+    # Episodic + Working Memory — both need Redis
+    redis_url = os.getenv("REDIS_URL", "")
+    if redis_url:
+        try:
+            import redis.asyncio as aioredis
+            from agent.memory import EpisodicMemory, WorkingMemory
+
+            _redis_conn = aioredis.from_url(redis_url, decode_responses=True)
+            _episodic_memory = EpisodicMemory(redis=_redis_conn, agent_id=agent_id)
+            _working_memory = WorkingMemory(redis=_redis_conn)
+        except Exception as exc:
+            log.warning("EpisodicMemory/WorkingMemory init failed: %s", exc)
+    else:
+        log.info("REDIS_URL not set — episodic and working memory disabled")
+
+    return _semantic_memory, _episodic_memory, _working_memory
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -100,14 +144,59 @@ def _now_iso() -> str:
 
 async def memory_retrieval_node(state: "AgentState") -> dict[str, Any]:
     """
-    Query Redis and Pinecone for context relevant to the task.
-    Populates state.memory_context.
+    Retrieve context relevant to the task from:
+      - SemanticMemory (Pinecone vector similarity, reranked)
+      - EpisodicMemory (last N session interactions from Redis)
+    Populates state.memory_context and state.memory_citations.
     """
     log.info("[node:memory_retrieval] run=%s task_len=%d", state["run_id"], len(state["task"]))
 
-    # Memory client is injected via graph config at runtime
-    # For now we return an empty list; real retrieval wired in main.py
-    return {"memory_context": []}
+    semantic, episodic, _working = _get_memory_clients()
+
+    memory_context: list[str] = []
+    memory_citations: list[str] = []
+    session_id = state.get("session_id", state["run_id"])
+
+    # 1. Semantic recall + rerank
+    if semantic is not None:
+        try:
+            from agent.memory import CrossEncoderReranker
+
+            reranker = CrossEncoderReranker()
+            chunks = await semantic.recall(state["task"], top_k=10)
+            ranked = await reranker.rerank(state["task"], chunks, top_k=5)
+            for chunk in ranked:
+                memory_context.append(chunk.content)
+                memory_citations.append(chunk.chunk_id)
+            log.info(
+                "[node:memory_retrieval] semantic: recalled=%d reranked=%d",
+                len(chunks),
+                len(ranked),
+            )
+        except Exception as exc:
+            log.warning("[node:memory_retrieval] semantic recall failed: %s", exc)
+
+    # 2. Episodic history (recent session interactions)
+    if episodic is not None:
+        try:
+            history = await episodic.load(session_id, limit=5)
+            for interaction in history:
+                role = interaction.get("role", "assistant")
+                content = interaction.get("content", "")
+                if content:
+                    memory_context.append(f"[History/{role}] {content}")
+            log.info(
+                "[node:memory_retrieval] episodic: loaded %d interactions",
+                len(history),
+            )
+        except Exception as exc:
+            log.warning("[node:memory_retrieval] episodic load failed: %s", exc)
+
+    return {
+        "memory_context": memory_context,
+        "memory_citations": memory_citations,
+        "session_id": session_id,
+    }
 
 
 # ── Node 2: Planner ───────────────────────────────────────────────────────────
@@ -386,7 +475,8 @@ async def hitl_checkpoint_node(state: "AgentState") -> dict[str, Any]:
 async def output_node(state: "AgentState") -> dict[str, Any]:
     """
     Consolidate all observations into a final structured output.
-    Updates Redis with the final run status.
+    Persists full AgentState snapshot in WorkingMemory.
+    Logs completion event to the Redis Stream.
     """
     log.info("[node:output] run=%s", state["run_id"])
 
@@ -399,11 +489,40 @@ async def output_node(state: "AgentState") -> dict[str, Any]:
         joined = "\n\n".join(f"Step {i+1}: {obs}" for i, obs in enumerate(observations))
         final = f"Task completed successfully.\n\n{joined}"
 
-    # Advance current_step to signal completion
-    return {
+    result_state: dict[str, Any] = {
         "final_output": final,
         "current_step": len(state.get("plan", [])),
     }
+
+    # Persist state snapshot and log event (best-effort, non-blocking)
+    _semantic, episodic, working = _get_memory_clients()
+
+    if working is not None:
+        try:
+            merged = {**dict(state), **result_state}
+            await working.save_state(state["run_id"], merged)
+            log.info("[node:output] WorkingMemory snapshot saved for run=%s", state["run_id"])
+        except Exception as exc:
+            log.warning("[node:output] WorkingMemory save failed: %s", exc)
+
+    if episodic is not None:
+        try:
+            await episodic.log_event(
+                run_id=state["run_id"],
+                event={
+                    "event_type": "agent.run.completed" if not error else "agent.run.failed",
+                    "payload": {
+                        "final_output_len": len(final),
+                        "total_tool_calls": len(state.get("tool_calls", [])),
+                        "citations": state.get("memory_citations", []),
+                        "error": error,
+                    },
+                },
+            )
+        except Exception as exc:
+            log.warning("[node:output] Stream log_event failed: %s", exc)
+
+    return result_state
 
 
 # ── Helper: advance_step (exposed for graph.py import) ───────────────────────

@@ -12,12 +12,30 @@ Usage::
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import time
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 
 log = logging.getLogger("agentops.tools")
+
+# Module-level ProceduralMemory singleton (initialised lazily)
+_procedural_memory: Optional[Any] = None
+
+
+def _get_procedural_memory() -> Optional[Any]:
+    """Return the module-level ProceduralMemory, creating it on first call."""
+    global _procedural_memory
+    if _procedural_memory is not None:
+        return _procedural_memory
+    try:
+        from agent.memory.procedural import ProceduralMemory
+
+        _procedural_memory = ProceduralMemory()  # uses POSTGRES_URL env var
+    except Exception:
+        pass  # silently skip if not configured
+    return _procedural_memory
 
 
 class BaseTool(ABC):
@@ -43,7 +61,7 @@ class BaseTool(ABC):
         ...
 
     async def execute(self, **kwargs: Any) -> dict[str, Any]:
-        """Wraps _execute with timing, logging, and error handling."""
+        """Wraps _execute with timing, logging, error handling, and ProceduralMemory tracking."""
         start = time.perf_counter()
         log.info("Tool executing: %s args=%s", self.name, list(kwargs.keys()))
         try:
@@ -52,10 +70,20 @@ class BaseTool(ABC):
             result["duration_ms"] = duration_ms
             result["success"] = True
             log.info("Tool completed: %s duration=%.1fms", self.name, duration_ms)
+            # Record success (fire-and-forget, non-blocking)
+            pm = _get_procedural_memory()
+            if pm is not None:
+                asyncio.create_task(pm.record_call(self.name, success=True, latency_ms=duration_ms))
             return result
         except Exception as exc:
             duration_ms = (time.perf_counter() - start) * 1000
             log.error("Tool failed: %s error=%s", self.name, exc)
+            # Record failure (fire-and-forget, non-blocking)
+            pm = _get_procedural_memory()
+            if pm is not None:
+                asyncio.create_task(
+                    pm.record_call(self.name, success=False, latency_ms=duration_ms)
+                )
             return {
                 "output": f"Tool '{self.name}' failed: {exc}",
                 "error": str(exc),
@@ -72,6 +100,14 @@ class BaseTool(ABC):
                 "description": self.description,
                 "parameters": self.schema,
             },
+        }
+
+    def to_registry_schema(self) -> dict[str, Any]:
+        """Return the dict used for ProceduralMemory DB upsert."""
+        return {
+            "tool_name": self.name,
+            "description": self.description,
+            "schema_json": self.schema,
         }
 
     def __repr__(self) -> str:

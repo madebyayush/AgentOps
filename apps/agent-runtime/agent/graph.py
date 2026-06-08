@@ -128,3 +128,39 @@ def get_checkpointer() -> Any:
     except ImportError:
         log.warning("AsyncSqliteSaver not available — running without checkpointing.")
         return None
+
+
+def get_run_state(run_id: str, redis: Any = None) -> Any:
+    """
+    Retrieve the persisted AgentState for a run from WorkingMemory.
+    Used by REST endpoint: GET /agents/{run_id}/state
+
+    Args:
+        run_id  : The run ID to look up.
+        redis   : An async Redis connection. If None, reads REDIS_URL env var.
+
+    Returns:
+        A coroutine that resolves to dict[str, Any] | None.
+    """
+    import asyncio
+
+    async def _load() -> Any:
+        try:
+            from agent.memory.working import WorkingMemory
+
+            _redis = redis
+            if _redis is None:
+                redis_url = os.getenv("REDIS_URL", "")
+                if not redis_url:
+                    return None
+                import redis as _redis_mod
+                import redis.asyncio as aioredis
+
+                _redis = aioredis.from_url(redis_url, decode_responses=True)
+            wm = WorkingMemory(redis=_redis)
+            return await wm.load_state(run_id)
+        except Exception as exc:
+            log.warning("get_run_state failed for run_id=%s: %s", run_id, exc)
+            return None
+
+    return _load()

@@ -47,7 +47,9 @@ class AgentState(TypedDict):
     observations: list[str]  # Tool outputs / intermediate results
 
     # ── Memory ────────────────────────────────────────────────────────────────
-    memory_context: list[str]  # Retrieved relevant memories
+    session_id: str  # Links episodic memory interactions for this run
+    memory_context: list[str]  # Retrieved relevant memories (injected into LLM prompt)
+    memory_citations: list[str]  # Chunk IDs used by planner (for auditability)
 
     # ── Reflection & control flow ─────────────────────────────────────────────
     reflection: str  # Latest reflection rationale (human-readable)
